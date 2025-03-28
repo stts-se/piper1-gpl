@@ -20,7 +20,6 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=5000, help="HTTP server port")
     #
     parser.add_argument("-m", "--model", required=True, help="Path to Onnx model file")
-    parser.add_argument("-c", "--config", help="Path to model config file")
     #
     parser.add_argument("-s", "--speaker", type=int, help="Id of speaker (default: 0)")
     parser.add_argument(
@@ -58,10 +57,6 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
     _LOGGER.debug(args)
 
-    if not args.download_dir:
-        # Download to first data directory by default
-        args.download_dir = args.data_dir[0]
-
     # Download voice if file doesn't exist
     model_path = Path(args.model)
     if not model_path.exists():
@@ -80,7 +75,7 @@ def main() -> None:
         )
 
     # Load voice
-    voice = PiperVoice.load(args.model, config_path=args.config, use_cuda=args.cuda)
+    voice = PiperVoice.load(model_path, use_cuda=args.cuda)
     synthesize_args = {
         "speaker_id": args.speaker,
         "length_scale": args.length_scale,
