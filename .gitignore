@@ -1,0 +1,16 @@
+.DS_Store
+.idea
+*.log
+tmp/
+
+*.py[cod]
+*.egg
+build
+htmlcov
+
+dist/
+local/
+.venv/
+__espeak_ng.so
+espeak_ngPYTHON_wrap.c
+espeak-ng-data/
