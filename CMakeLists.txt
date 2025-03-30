@@ -27,6 +27,7 @@ ExternalProject_Add(espeak_ng_external
         -DEXTRA_cmn:BOOL=ON
         -DEXTRA_ru:BOOL=ON
         -DCMAKE_C_FLAGS="-D_FILE_OFFSET_BITS=64"
+        -DESPEAK_DATA_PATH=${ESPEAKNG_INSTALL_DIR}/share/espeak-ng-data
     BUILD_BYPRODUCTS
         ${ESPEAKNG_INSTALL_DIR}/lib/libespeak-ng.a
         ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/libucd.a
