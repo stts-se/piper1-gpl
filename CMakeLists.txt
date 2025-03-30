@@ -14,6 +14,7 @@ ExternalProject_Add(espeak_ng_external
     GIT_REPOSITORY https://github.com/espeak-ng/espeak-ng.git
     GIT_TAG 212928b394a96e8fd2096616bfd54e17845c48f6  # 2025-Mar-22
     PREFIX ${ESPEAKNG_BUILD_DIR}
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --parallel 1
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${ESPEAKNG_INSTALL_DIR}
         -DBUILD_SHARED_LIBS:BOOL=OFF
@@ -27,7 +28,6 @@ ExternalProject_Add(espeak_ng_external
         -DEXTRA_cmn:BOOL=ON
         -DEXTRA_ru:BOOL=ON
         -DCMAKE_C_FLAGS="-D_FILE_OFFSET_BITS=64"
-        -DESPEAK_DATA_PATH=${ESPEAKNG_INSTALL_DIR}/share/espeak-ng-data
     BUILD_BYPRODUCTS
         ${ESPEAKNG_INSTALL_DIR}/lib/libespeak-ng.a
         ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/libucd.a
