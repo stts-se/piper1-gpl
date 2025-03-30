@@ -6,6 +6,12 @@ include(ExternalProject)
 find_package(SWIG REQUIRED)
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
+if(MSVC)
+    # Force compiler to use UTF-8
+    add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+    add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+endif()
+
 # Install location for espeak-ng
 set(ESPEAKNG_BUILD_DIR ${CMAKE_BINARY_DIR}/espeak_ng)
 set(ESPEAKNG_INSTALL_DIR ${CMAKE_BINARY_DIR}/espeak_ng-install)
@@ -14,7 +20,6 @@ ExternalProject_Add(espeak_ng_external
     GIT_REPOSITORY https://github.com/espeak-ng/espeak-ng.git
     GIT_TAG 212928b394a96e8fd2096616bfd54e17845c48f6  # 2025-Mar-22
     PREFIX ${ESPEAKNG_BUILD_DIR}
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --parallel 1
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${ESPEAKNG_INSTALL_DIR}
         -DBUILD_SHARED_LIBS:BOOL=OFF
