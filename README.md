@@ -43,6 +43,13 @@ Running Piper this way is slow since it needs to load the model each time. Run t
 
 ## Web Server
 
+Install the necessary dependencies:
+
+``` sh
+python3 -m pip install piper[http]
+```
+
+
 After downloading the example voice above, run:
 
 ``` sh

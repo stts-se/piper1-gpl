@@ -24,7 +24,7 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "onnxruntime==1.21.0"
+    "onnxruntime=>1,<2"
 ]
 
 [project.optional-dependencies]
@@ -37,7 +37,7 @@ dev = [
     "build==1.2.2",
 ]
 http = [
-    "flask==3.1.0"
+    "flask>=3,<4"
 ]
 
 [tool.scikit-build]
