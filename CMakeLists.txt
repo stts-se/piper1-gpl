@@ -15,6 +15,9 @@ if (NOT Python_LIBRARIES)
     set(Python_LIBRARIES ${Python_LIBRARY} ${PYTHON_LIBRARY})
 endif()
 
+message(STATUS "Python_INCLUDE_DIRS: ${Python_INCLUDE_DIRS}")
+message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}")
+
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 # Install location for espeak-ng
