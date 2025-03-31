@@ -36,7 +36,7 @@ ExternalProject_Add(espeak_ng_external
         -DUSE_SPEECHPLAYER:BOOL=OFF
         -DEXTRA_cmn:BOOL=ON
         -DEXTRA_ru:BOOL=ON
-        -DCMAKE_C_FLAGS="-D_FILE_OFFSET_BITS=64"
+        -DCMAKE_C_FLAGS="-D_FILE_OFFSET_BITS=64 -I${CMAKE_BINARY_DIR}/espeak_ng_external/src/ucd-tools/src/include/ucd"
     BUILD_BYPRODUCTS
         ${ESPEAKNG_STATIC_LIB}
         ${UCD_STATIC_LIB}
@@ -45,8 +45,6 @@ ExternalProject_Add(espeak_ng_external
 
 include_directories(
     ${ESPEAKNG_INSTALL_DIR}/include
-    ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/libespeak-ng/include
-    ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/include
 )
 
 # Build the SWIG module
