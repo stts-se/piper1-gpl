@@ -16,6 +16,10 @@ jobs:
 
       - uses: actions/setup-python@v5
 
+      - name: Install SWIG
+        if: matrix.os == 'macos-latest'
+        run: brew install swig
+
       - name: Install Piper
         run: |
           script/setup --dev
