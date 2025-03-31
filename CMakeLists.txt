@@ -24,7 +24,6 @@ ExternalProject_Add(espeak_ng_external
     GIT_REPOSITORY https://github.com/espeak-ng/espeak-ng.git
     GIT_TAG 212928b394a96e8fd2096616bfd54e17845c48f6  # 2025-Mar-22
     PREFIX ${ESPEAKNG_BUILD_DIR}
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --parallel 1
     CMAKE_ARGS
         -DCMAKE_INSTALL_PREFIX=${ESPEAKNG_INSTALL_DIR}
         -DBUILD_SHARED_LIBS:BOOL=OFF
@@ -46,6 +45,8 @@ ExternalProject_Add(espeak_ng_external
 
 include_directories(
     ${ESPEAKNG_INSTALL_DIR}/include
+    ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/libespeak-ng/include
+    ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/include
 )
 
 # Build the SWIG module
