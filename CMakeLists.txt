@@ -7,12 +7,12 @@ include(ExternalProject)
 find_package(SWIG REQUIRED)
 
 # Copy variables from scikit-build
-if (Python_INCLUDE_DIR AND NOT Python_INCLUDE_DIRS)
-    set(Python_INCLUDE_DIRS ${Python_INCLUDE_DIR})
+if (NOT Python_INCLUDE_DIRS)
+    set(Python_INCLUDE_DIRS ${Python_INCLUDE_DIR} ${PYTHON_INCLUDE_DIR})
 endif()
 
-if (Python_LIBRARY AND NOT Python_LIBRARIES)
-    set(Python_LIBRARIES ${Python_LIBRARY})
+if (NOT Python_LIBRARIES)
+    set(Python_LIBRARIES ${Python_LIBRARY} ${PYTHON_LIBRARY})
 endif()
 
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
