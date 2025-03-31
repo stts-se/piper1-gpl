@@ -6,19 +6,7 @@ include(UseSWIG)
 include(ExternalProject)
 find_package(SWIG REQUIRED)
 
-# Copy variables from scikit-build
-if (NOT Python_INCLUDE_DIRS)
-    set(Python_INCLUDE_DIRS ${Python_INCLUDE_DIR} ${PYTHON_INCLUDE_DIR})
-endif()
-
-if (NOT Python_LIBRARIES)
-    set(Python_LIBRARIES ${Python_LIBRARY} ${PYTHON_LIBRARY})
-endif()
-
-message(STATUS "Python_INCLUDE_DIRS: ${Python_INCLUDE_DIRS}")
-message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}")
-
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 # Install location for espeak-ng
 set(ESPEAKNG_BUILD_DIR ${CMAKE_BINARY_DIR}/espeak_ng)
@@ -75,7 +63,7 @@ include_directories(${CMAKE_BINARY_DIR}/espeak_ng-install/include)
 target_link_libraries(${SWIG_MODULE_espeak_ng_REAL_NAME}
     ${ESPEAKNG_STATIC_LIB}
     ${UCD_STATIC_LIB}
-    Python::Python
+    Python::Module
 )
 
 set_target_properties(${SWIG_MODULE_espeak_ng_REAL_NAME} PROPERTIES
