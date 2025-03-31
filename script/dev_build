@@ -10,10 +10,6 @@ _VENV_DIR = _PROGRAM_DIR / ".venv"
 
 context = venv.EnvBuilder().ensure_directories(_VENV_DIR)
 subprocess.check_call(
-    [context.env_exe, "-m", "pip", "install", "-e", f"{_PROGRAM_DIR}[dev]"]
-    + sys.argv[1:]
-)
-subprocess.check_call(
     [context.env_exe, str(_PROGRAM_DIR / "setup.py"), "build_ext", "--inplace"]
     + sys.argv[1:]
 )

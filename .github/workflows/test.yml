@@ -17,7 +17,9 @@ jobs:
       - uses: actions/setup-python@v5
 
       - name: Install Piper
-        run: script/dev_build
+        run: >
+          script/setup --dev
+          script/dev_build
 
       - name: Run tests
         run: script/test
