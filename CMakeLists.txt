@@ -53,7 +53,7 @@ include_directories(
 )
 
 # Build the SWIG module
-set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/piper)
+set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/src/piper)
 
 swig_add_library(espeak_ng
     TYPE MODULE
@@ -76,19 +76,20 @@ set_target_properties(${SWIG_MODULE_espeak_ng_REAL_NAME} PROPERTIES
 )
 
 install(TARGETS ${SWIG_MODULE_espeak_ng_REAL_NAME}
-    LIBRARY DESTINATION piper
-    RUNTIME DESTINATION piper
+    LIBRARY DESTINATION .
+    RUNTIME DESTINATION .
 )
 
-install(FILES ${CMAKE_SWIG_OUTDIR}/espeak_ng.py DESTINATION piper)
+install(FILES ${CMAKE_SWIG_OUTDIR}/espeak_ng.py
+    DESTINATION .
+)
 
 # Copy espeak-ng-data
 set(DATA_SRC ${CMAKE_BINARY_DIR}/espeak_ng-install/share/espeak-ng-data)
-set(DATA_DST ${CMAKE_CURRENT_SOURCE_DIR}/piper/espeak-ng-data)
+set(DATA_DST ${CMAKE_CURRENT_SOURCE_DIR}/src/piper/espeak-ng-data)
 
 add_custom_target(copy_espeak_ng_data ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${DATA_SRC} ${DATA_DST}
+    DEPENDS espeak_ng_external
     COMMENT "Copying espeak-ng-data after espeak-ng external project builds"
 )
-
-add_dependencies(copy_espeak_ng_data espeak_ng_external)
