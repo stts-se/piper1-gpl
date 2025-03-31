@@ -42,6 +42,10 @@ setup(
             "pylint==3.2.7",
             "pytest==8.3.4",
             "build==1.2.2",
+            "scikit-build<1",
+            "swig>=4,<5",
+            "cmake>=3.18,<4",
+            "ninja>=1,<2",
         ],
         "http": [
             "flask>=3,<4",

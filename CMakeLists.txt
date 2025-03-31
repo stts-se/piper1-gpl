@@ -1,6 +1,6 @@
 # Builds Python module for Piper using espeak-ng and cmake.
 #
-# This is called automatically by scikit-build-core from pyproject.toml.
+# This is called automatically by scikit-build from setup.py.
 cmake_minimum_required(VERSION 3.18)
 project(piper LANGUAGES C CXX)
 
