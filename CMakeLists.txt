@@ -5,6 +5,11 @@ project(piper LANGUAGES C CXX)
 include(UseSWIG)
 include(ExternalProject)
 find_package(SWIG REQUIRED)
+
+# Copy variables from scikit-build
+set(Python_EXECUTABLE "${PYTHON_EXECUTABLE}")
+set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
+set(Python_LIBRARY "${PYTHON_LIBRARY}")
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 # Install location for espeak-ng
