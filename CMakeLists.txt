@@ -6,6 +6,7 @@ include(UseSWIG)
 include(ExternalProject)
 find_package(SWIG REQUIRED)
 
+# scikit-build-core will forward Python_* variables
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 # Install location for espeak-ng
@@ -13,6 +14,7 @@ set(ESPEAKNG_BUILD_DIR ${CMAKE_BINARY_DIR}/espeak_ng)
 set(ESPEAKNG_INSTALL_DIR ${CMAKE_BINARY_DIR}/espeak_ng-install)
 
 if(WIN32)
+    # Special handling for Windows
     set(ESPEAKNG_STATIC_LIB ${ESPEAKNG_INSTALL_DIR}/lib/espeak-ng.lib)
     set(UCD_STATIC_LIB ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/Release/ucd.lib)
 else()
@@ -36,6 +38,7 @@ ExternalProject_Add(espeak_ng_external
         -DUSE_SPEECHPLAYER:BOOL=OFF
         -DEXTRA_cmn:BOOL=ON
         -DEXTRA_ru:BOOL=ON
+        # Need to explicitly add ucd include directory for CI
         "-DCMAKE_C_FLAGS=-D_FILE_OFFSET_BITS=64 -I${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external/src/ucd-tools/src/include"
     BUILD_BYPRODUCTS
         ${ESPEAKNG_STATIC_LIB}
@@ -63,7 +66,7 @@ include_directories(${CMAKE_BINARY_DIR}/espeak_ng-install/include)
 target_link_libraries(${SWIG_MODULE_espeak_ng_REAL_NAME}
     ${ESPEAKNG_STATIC_LIB}
     ${UCD_STATIC_LIB}
-    Python::Module
+    Python::Module  # NOTE: Python::Python doesn't work in CI
 )
 
 set_target_properties(${SWIG_MODULE_espeak_ng_REAL_NAME} PROPERTIES
