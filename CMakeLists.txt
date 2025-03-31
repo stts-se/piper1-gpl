@@ -1,3 +1,4 @@
+# Builds Python module for Piper using espeak-ng and cmake.
 cmake_minimum_required(VERSION 3.18)
 project(piper LANGUAGES C CXX)
 
@@ -6,15 +7,17 @@ include(ExternalProject)
 find_package(SWIG REQUIRED)
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
-if(MSVC)
-    # Force compiler to use UTF-8
-    add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-    add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
-endif()
-
 # Install location for espeak-ng
 set(ESPEAKNG_BUILD_DIR ${CMAKE_BINARY_DIR}/espeak_ng)
 set(ESPEAKNG_INSTALL_DIR ${CMAKE_BINARY_DIR}/espeak_ng-install)
+
+if(WIN32)
+    set(ESPEAKNG_STATIC_LIB ${ESPEAKNG_INSTALL_DIR}/lib/espeak-ng.lib)
+    set(UCD_STATIC_LIB ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/Release/ucd.lib)
+else()
+    set(ESPEAKNG_STATIC_LIB ${ESPEAKNG_INSTALL_DIR}/lib/libespeak-ng.a)
+    set(UCD_STATIC_LIB ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/libucd.a)
+endif()
 
 ExternalProject_Add(espeak_ng_external
     GIT_REPOSITORY https://github.com/espeak-ng/espeak-ng.git
@@ -34,8 +37,8 @@ ExternalProject_Add(espeak_ng_external
         -DEXTRA_ru:BOOL=ON
         -DCMAKE_C_FLAGS="-D_FILE_OFFSET_BITS=64"
     BUILD_BYPRODUCTS
-        ${ESPEAKNG_INSTALL_DIR}/lib/libespeak-ng.a
-        ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/libucd.a
+        ${ESPEAKNG_STATIC_LIB}
+        ${UCD_STATIC_LIB}
     UPDATE_DISCONNECTED TRUE
 )
 
@@ -57,8 +60,8 @@ add_dependencies(${SWIG_MODULE_espeak_ng_REAL_NAME} espeak_ng_external)
 # Include the espeak-ng headers and link the static lib
 include_directories(${CMAKE_BINARY_DIR}/espeak_ng-install/include)
 target_link_libraries(${SWIG_MODULE_espeak_ng_REAL_NAME}
-    ${ESPEAKNG_INSTALL_DIR}/lib/libespeak-ng.a
-    ${ESPEAKNG_BUILD_DIR}/src/espeak_ng_external-build/src/ucd-tools/libucd.a
+    ${ESPEAKNG_STATIC_LIB}
+    ${UCD_STATIC_LIB}
     Python::Python
 )
 
