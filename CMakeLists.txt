@@ -7,9 +7,14 @@ include(ExternalProject)
 find_package(SWIG REQUIRED)
 
 # Copy variables from scikit-build
-set(Python_EXECUTABLE "${PYTHON_EXECUTABLE}")
-set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
-set(Python_LIBRARY "${PYTHON_LIBRARY}")
+if (Python_INCLUDE_DIR AND NOT Python_INCLUDE_DIRS)
+    set(Python_INCLUDE_DIRS ${Python_INCLUDE_DIR})
+endif()
+
+if (Python_LIBRARY AND NOT Python_LIBRARIES)
+    set(Python_LIBRARIES ${Python_LIBRARY})
+endif()
+
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 # Install location for espeak-ng
