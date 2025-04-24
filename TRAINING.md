@@ -1,0 +1,65 @@
+# Training
+
+Code for training new voices is included in `src/piper/train` and can be run with `script/train`.
+This uses [PyTorch Lightning][lighting] and the `LightningCLI`.
+
+You must install the training dependencies:
+
+``` sh
+python3 -m pip install piper[train]
+```
+
+and then build the cython extension:
+
+``` sh
+./build_monotonic_align.sh
+```
+
+To train, you must have a CSV file with `|` as a delimiter and the format:
+
+``` csv
+utt1.wav|Text for utterance 1.
+utt2.wav|Text for utterance 2.
+...
+```
+
+The first column is the name of the audio file (any format supported by [librosa][]), which must be located in `--data.audio_dir` (see below).
+
+The second column is the text that will be passed to [espeak-ng][] for phonemization (similar to `espeak-ng --ipa=3`).
+
+Run the training script:
+
+``` sh
+script/train \
+  --data.voice_name "<name of voice>" \
+  --data.csv_path /path/to/metadata.csv \
+  --data.audio_dir /path/to/audio/ \
+  --model.sample_rate 22050 \
+  --data.espeak_voice "<espeak voice name>" \
+  --data.cache_dir /path/to/cache/dir/ \
+  --data.config_path /path/to/write/config.json \
+  --data.batch_size 32 \
+  --ckpt_path /path/to/finetune.ckpt  # optional
+```
+
+where:
+
+* `data.voice_name` is the name of your voice (can be anything)
+* `data.csv_path` is the path to the CSV file with audio file names and text
+* `data.audio_dir` is the directory containing the audio files
+* `model.sample_rate` is the sample rate of the audio in hertz
+* `data.espeak_voice` is the espeak-ng voice/language like `en-us` (see `espeak-ng --voices`)
+* `data.cache_dir` is a directory where training artifacts are cached (phonemes, trimmed audio, etc.)
+* `data.batch_size` is the training batch size
+* `ckpt_path` is the path to an existing [Piper checkpoint][piper-checkpoints]
+
+Using `--ckpt_path` is recommend since it will speed up training a lot, even if the checkpoint is from a different language. Only `medium` quality checkpoints are supported without [tweaking other settings][audio-config].
+
+Run `script/train --help` for many more options.
+
+<!-- Links -->
+[espeak-ng]: https://github.com/espeak-ng/espeak-ng
+[lighting]: https://lightning.ai/docs/pytorch/stable/
+[librosa]: https://librosa.org/doc/latest/index.html
+[piper-checkpoints]: https://huggingface.co/datasets/rhasspy/piper-checkpoints
+[audio-config]: https://github.com/rhasspy/piper/blob/9b1c6397698b1da11ad6cca2b318026b628328ec/src/python/piper_train/vits/config.py#L20

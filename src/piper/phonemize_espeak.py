@@ -13,11 +13,14 @@ from .const import (
     espeakCHARS_AUTO,
 )
 
+_DIR = Path(__file__).parent
+ESPEAK_DATA_DIR = _DIR / "espeak-ng-data"
+
 
 class EspeakPhonemizer:
     """Phonemizer that uses espeak-ng."""
 
-    def __init__(self, espeak_data_dir: Union[str, Path]) -> None:
+    def __init__(self, espeak_data_dir: Union[str, Path] = ESPEAK_DATA_DIR) -> None:
         """Initialize phonemizer."""
         from . import espeak_ng  # avoid circular import
 

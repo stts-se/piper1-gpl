@@ -37,6 +37,7 @@ def test_phonemize_synthesize() -> None:
     # Test 1.
     assert phoneme_ids[0] == [
         1,  # BOS
+        0,
         32,
         0,  # PAD
         120,
@@ -65,6 +66,7 @@ def test_phonemize_synthesize() -> None:
     # Test 2.
     assert phoneme_ids[1] == [
         1,  # BOS
+        0,
         32,
         0,  # PAD
         120,

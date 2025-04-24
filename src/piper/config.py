@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, Mapping, Sequence
 
+DEFAULT_NOISE_SCALE = 0.667
+DEFAULT_LENGTH_SCALE = 1.0
+DEFAULT_NOISE_W_SCALE = 0.8
+
 
 class PhonemeType(str, Enum):
     ESPEAK = "espeak"
@@ -26,15 +30,16 @@ class PiperConfig:
     espeak_voice: str
     """Name of espeak-ng voice or alphabet"""
 
-    length_scale: float
-    noise_scale: float
-    noise_w: float
-
     phoneme_id_map: Mapping[str, Sequence[int]]
     """Phoneme -> [id,]"""
 
     phoneme_type: PhonemeType
     """espeak or text"""
+
+    # Inference settings
+    length_scale: float = DEFAULT_LENGTH_SCALE
+    noise_scale: float = DEFAULT_NOISE_SCALE
+    noise_w: float = DEFAULT_NOISE_W_SCALE
 
     @staticmethod
     def from_dict(config: Dict[str, Any]) -> "PiperConfig":
@@ -44,11 +49,30 @@ class PiperConfig:
             num_symbols=config["num_symbols"],
             num_speakers=config["num_speakers"],
             sample_rate=config["audio"]["sample_rate"],
-            noise_scale=inference.get("noise_scale", 0.667),
-            length_scale=inference.get("length_scale", 1.0),
-            noise_w=inference.get("noise_w", 0.8),
+            noise_scale=inference.get("noise_scale", DEFAULT_NOISE_SCALE),
+            length_scale=inference.get("length_scale", DEFAULT_LENGTH_SCALE),
+            noise_w=inference.get("noise_w", DEFAULT_NOISE_W_SCALE),
             #
             espeak_voice=config["espeak"]["voice"],
             phoneme_id_map=config["phoneme_id_map"],
             phoneme_type=PhonemeType(config.get("phoneme_type", PhonemeType.ESPEAK)),
         )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "audio": {
+                "sample_rate": self.sample_rate,
+            },
+            "espeak": {
+                "voice": self.espeak_voice,
+            },
+            "phoneme_type": self.phoneme_type.value,
+            "num_symbols": self.num_symbols,
+            "num_speakers": self.num_speakers,
+            "inference": {
+                "noise_scale": self.noise_scale,
+                "length_scale": self.length_scale,
+                "noise_w": self.noise_w,
+            },
+            "phoneme_id_map": self.phoneme_id_map,
+        }

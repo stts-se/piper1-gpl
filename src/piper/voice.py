@@ -13,12 +13,10 @@ import numpy as np
 import onnxruntime
 
 from .config import PhonemeType, PiperConfig
-from .const import BOS, EOS, PAD
-from .phonemize_espeak import EspeakPhonemizer
+from .phoneme_ids import phonemes_to_ids
+from .phonemize_espeak import ESPEAK_DATA_DIR, EspeakPhonemizer
 from .util import audio_float_to_int16
 
-_DIR = Path(__file__).parent
-_ESPEAK_DATA_DIR = _DIR / "espeak-ng-data"
 _ESPEAK_PHONEMIZER: Optional[EspeakPhonemizer] = None
 _ESPEAK_PHONEMIZER_LOCK = threading.Lock()
 
@@ -31,14 +29,14 @@ class PiperVoice:
 
     session: onnxruntime.InferenceSession
     config: PiperConfig
-    espeak_data_dir: Path = _ESPEAK_DATA_DIR
+    espeak_data_dir: Path = ESPEAK_DATA_DIR
 
     @staticmethod
     def load(
         model_path: Union[str, Path],
         config_path: Optional[Union[str, Path]] = None,
         use_cuda: bool = False,
-        espeak_data_dir: Union[str, Path] = _ESPEAK_DATA_DIR,
+        espeak_data_dir: Union[str, Path] = ESPEAK_DATA_DIR,
     ) -> "PiperVoice":
         """Load an ONNX model and config."""
         if config_path is None:
@@ -89,20 +87,7 @@ class PiperVoice:
 
     def phonemes_to_ids(self, phonemes: List[str]) -> List[int]:
         """Phonemes to ids."""
-        id_map = self.config.phoneme_id_map
-        ids: List[int] = list(id_map[BOS])
-
-        for phoneme in phonemes:
-            if phoneme not in id_map:
-                _LOGGER.warning("Missing phoneme from id map: %s", phoneme)
-                continue
-
-            ids.extend(id_map[phoneme])
-            ids.extend(id_map[PAD])
-
-        ids.extend(id_map[EOS])
-
-        return ids
+        return phonemes_to_ids(phonemes, self.config.phoneme_id_map)
 
     def synthesize(
         self,

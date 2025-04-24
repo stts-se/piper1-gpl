@@ -65,6 +65,10 @@ Now you can get WAV files via HTTP:
 curl -X POST -H 'Content-Type: text/plain' -d 'This is a test.' -o test.wav localhost:5000
 ```
 
+## Training New Voices
+
+See [TRAINING.md](TRAINING.md)
+
 ## Building Manually
 
 We use [scikit-build-core](https://github.com/scikit-build/scikit-build-core) along with [cmake](https://cmake.org/) and [swig](https://www.swig.org/) to build a Python module that directly embeds [espeak-ng][].

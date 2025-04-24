@@ -1,5 +1,5 @@
 [MASTER]
-ignore=espeak_ng.py
+ignore=espeak_ng.py, src/piper/train/vits, src/piper/train/vits/monotonic_align
 
 [MESSAGES CONTROL]
 disable=

@@ -35,6 +35,18 @@ setup(
         "onnxruntime>=1,<2",
     ],
     extras_require={
+        "train": [
+            "torch>=2,<3",
+            "lightning>=2,<3",
+            "tensorboard>=2,<3",
+            "tensorboardX>=2,<3",
+            "jsonargparse[signatures]>=4.27.7",
+            "pathvalidate>=3,<4",
+            "onnx>=1,<2",
+            "pysilero-vad>=2.1,<3",
+            "cython>=3,<4",
+            "librosa<1",
+        ],
         "dev": [
             "black==24.8.0",
             "flake8==7.1.1",
