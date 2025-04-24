@@ -15,6 +15,13 @@ and then build the cython extension:
 ./build_monotonic_align.sh
 ```
 
+If you are running from the repo, you will need to do a dev build:
+
+``` sh
+script/setup --dev
+script/dev_build
+```
+
 To train, you must have a CSV file with `|` as a delimiter and the format:
 
 ``` csv
