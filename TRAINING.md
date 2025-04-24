@@ -50,12 +50,28 @@ where:
 * `model.sample_rate` is the sample rate of the audio in hertz
 * `data.espeak_voice` is the espeak-ng voice/language like `en-us` (see `espeak-ng --voices`)
 * `data.cache_dir` is a directory where training artifacts are cached (phonemes, trimmed audio, etc.)
+* `data.config_path` is the path to write the voice's JSON config file
 * `data.batch_size` is the training batch size
 * `ckpt_path` is the path to an existing [Piper checkpoint][piper-checkpoints]
 
 Using `--ckpt_path` is recommend since it will speed up training a lot, even if the checkpoint is from a different language. Only `medium` quality checkpoints are supported without [tweaking other settings][audio-config].
 
 Run `script/train --help` for many more options.
+
+## Exporting
+
+When your model is finished training, export it to onnx with:
+
+``` sh
+python3 -m piper.train.export_onnx \
+  --checkpoint /path/to/checkpoint.ckpt \
+  --output-file /path/to/model.onnx
+```
+
+To make this compatible with other Piper voices, rename `model.onnx` as `<language>-<name>-medium.onnx` (e.g., `en_US-lessac-medium.onnx`). Name the JSON config file that was written to `--data.config_path` the same with a `.json` extension. So you would have two files for the voice:
+
+* `en_US-lessac-medium.onnx`
+* `en_US-lessac-medium.onnx.json`
 
 <!-- Links -->
 [espeak-ng]: https://github.com/espeak-ng/espeak-ng
