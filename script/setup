@@ -11,6 +11,7 @@ _MODULE_DIR = _PROGRAM_DIR / "src" / "piper"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dev", action="store_true", help="Install dev requirements")
+parser.add_argument("--train", action="store_true", help="Install training requirements")
 args = parser.parse_args()
 
 # Create virtual environment
@@ -29,3 +30,7 @@ subprocess.check_call(pip + ["install", "-e", str(_PROGRAM_DIR)])
 if args.dev:
     # Install dev requirements
     subprocess.check_call(pip + ["install", "-e", f"{_PROGRAM_DIR}[dev]"])
+
+if args.train:
+    # Install training requirements
+    subprocess.check_call(pip + ["install", "-e", f"{_PROGRAM_DIR}[train]"])
