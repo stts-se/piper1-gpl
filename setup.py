@@ -62,7 +62,7 @@ setup(
             "flask>=3,<4",
         ],
     },
-    packages=["piper"],
+    packages=["piper", "piper.train"],
     package_dir={"": "src"},
     include_package_data=True,
     package_data={
