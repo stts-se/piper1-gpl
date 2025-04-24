@@ -1,5 +1,6 @@
 """Phonemization with espeak-ng."""
 
+import re
 import unicodedata
 from pathlib import Path
 from typing import List, Union
@@ -52,6 +53,12 @@ class EspeakPhonemizer:
                 )
             )
 
+            # Filter out (lang) switch (flags).
+            # These surround words from languages other than the current voice.
+            phonemes_str = re.sub(r"\([^)]+\)", "", phonemes_str)
+
+            # Decompose phonemes into UTF-8 codepoints.
+            # This separates accent characters into separate "phonemes".
             sentence_phonemes.extend(list(unicodedata.normalize("NFD", phonemes_str)))
 
             terminator = ClauseTerminator.from_espeak(terminator_code)

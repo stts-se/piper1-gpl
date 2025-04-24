@@ -5,6 +5,7 @@ import wave
 from pathlib import Path
 
 from piper import PiperVoice
+from piper.phonemize_espeak import EspeakPhonemizer
 
 _DIR = Path(__file__).parent
 _TESTS_DIR = _DIR
@@ -95,6 +96,13 @@ def test_phonemize_synthesize() -> None:
     audio = voice.synthesize_ids_to_raw(phoneme_ids[0])
     assert len(audio) == 22050 * 2  # 1 second of silence (16-bit samples)
     assert not any(audio)
+
+
+def test_language_switch_flags_removed() -> None:
+    """Test that (language) switch (flags) are removed."""
+    phonemizer = EspeakPhonemizer()
+    phonemes = phonemizer.phonemize("ar", "test")
+    assert phonemes == [["t", "ˈ", "ɛ", "s", "t"]]
 
 
 def test_synthesize() -> None:
