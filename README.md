@@ -1,6 +1,6 @@
 # Piper 1 (GPL)
 
-A self-contained version of [Piper](https://github.com/rhasspy/piper), the fast and local neural text-to-speech engine.
+A self-contained version of [Piper][piper], the fast and local neural text-to-speech engine.
 
 This version directly embeds [espeak-ng][] and therefore has a [GPL license](COPYING).
 
@@ -20,7 +20,7 @@ List voices with:
 python3 -m piper.download_voices
 ```
 
-Choose a voice ([samples here](https://rhasspy.github.io/piper-samples/)) and download. For example:
+Choose a voice ([samples here][samples]) and download. For example:
 
 ``` sh
 python3 -m piper.download_voices en_US-lessac-medium
@@ -33,11 +33,17 @@ This will download to the current directory. Override with `--data-dir <DIR>`
 After downloading the example voice above, run:
 
 ``` sh
-echo 'This is a test.' | python3 -m piper -m en_US-lessac-medium -f test.wav
+python3 -m piper -m en_US-lessac-medium -f test.wav 'This is a test.'
 ```
 
 This will write `test.wav` with the sentence "This is a test."
 If you have voices in a different directory, use `--data-dir <DIR>`
+
+If you have [ffplay][] installed, omit `-f` to hear the audio immediately:
+
+``` sh
+python3 -m piper -m en_US-lessac-medium 'This will play on your speakers.'
+```
 
 Running Piper this way is slow since it needs to load the model each time. Run the web server unless you need to stream audio (see `--output-raw` from `--help`).
 
@@ -90,6 +96,18 @@ source .venv/bin/activate
 python3 -m pip install -e .[dev]
 ```
 
+Next, run `script/dev_build` or manually build the extension:
+
+``` sh
+python3 setup.py build_ext --inplace
+```
+
+Now you should be able to use `script/run` or manually run Piper:
+
+``` sh
+python3 -m piper --help
+```
+
 You can manually build wheels with:
 
 ``` sh
@@ -97,4 +115,7 @@ python3 -m build
 ```
 
 <!-- Links -->
+[piper]: https://github.com/rhasspy/piper
 [espeak-ng]: https://github.com/espeak-ng/espeak-ng
+[samples]: https://rhasspy.github.io/piper-samples/
+[ffplay]: https://ffmpeg.org/ffplay.html
