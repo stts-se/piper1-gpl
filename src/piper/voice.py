@@ -98,11 +98,13 @@ class PiperVoice:
         noise_scale: Optional[float] = None,
         noise_w: Optional[float] = None,
         sentence_silence: float = 0.0,
+        set_wav_params: bool = True,
     ):
         """Synthesize WAV audio from text."""
-        wav_file.setframerate(self.config.sample_rate)
-        wav_file.setsampwidth(2)  # 16-bit
-        wav_file.setnchannels(1)  # mono
+        if set_wav_params:
+            wav_file.setframerate(self.config.sample_rate)
+            wav_file.setsampwidth(2)  # 16-bit
+            wav_file.setnchannels(1)  # mono
 
         for audio_bytes in self.synthesize_stream_raw(
             text,

@@ -14,6 +14,7 @@ setup(
     name="piper",
     version="1.3.0",
     description="Fast and local neural text-to-speech engine",
+    url="http://github.com/OHF-voice/piper1-gpl",
     license="Apache-2.0",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -69,4 +70,9 @@ setup(
         "piper": [str(p) for p in ESPEAK_NG_DATA_FILES],
     },
     cmake_install_dir="src/piper",
+    entry_points={
+        "console_scripts": [
+            "piper = piper.__main__:main",
+        ]
+    },
 )
