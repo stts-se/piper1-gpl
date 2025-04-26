@@ -24,6 +24,13 @@ def main() -> None:
     parser.add_argument("-m", "--model", required=True, help="Path to Onnx model file")
     parser.add_argument("-c", "--config", help="Path to model config file")
     parser.add_argument(
+        "-i",
+        "--input-file",
+        "--input_file",
+        action="append",
+        help="Paths to input text files",
+    )
+    parser.add_argument(
         "-f",
         "--output-file",
         "--output_file",
@@ -78,17 +85,30 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
     _LOGGER.debug(args)
 
-    texts: Iterable[str]
-    if unknown_args:
-        texts = [" ".join(unknown_args)]
-    else:
-        texts = sys.stdin
+    if args.input_file:
+        # Input text from file(s)
+        def lines() -> Iterable[str]:
+            for input_path in args.input_file:
+                _LOGGER.debug("Reading text from %s", input_path)
+                with open(input_path, "r", encoding="utf-8") as input_file:
+                    for line in input_file:
+                        line = line.strip()
+                        if line:
+                            yield line
 
-    def lines() -> Iterable[str]:
-        for line in texts:
-            line = line.strip()
-            if line:
-                yield line
+    else:
+        # Input text from args or stdin
+        texts: Iterable[str]
+        if unknown_args:
+            texts = [" ".join(unknown_args)]
+        else:
+            texts = sys.stdin
+
+        def lines() -> Iterable[str]:
+            for line in texts:
+                line = line.strip()
+                if line:
+                    yield line
 
     model_path = Path(args.model)
     if not model_path.exists():
