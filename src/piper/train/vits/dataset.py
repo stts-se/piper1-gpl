@@ -107,17 +107,20 @@ class VitsDataModule(L.LightningDataModule):
         # Write config
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.config_path, "w", encoding="utf-8") as config_file:
-            config_dict = PiperConfig(
-                num_symbols=self.num_symbols,
-                num_speakers=self.num_speakers,
-                sample_rate=self.sample_rate,
-                espeak_voice=self.espeak_voice,
-                phoneme_id_map=DEFAULT_PHONEME_ID_MAP,
-                phoneme_type=PhonemeType.ESPEAK,
-            ).to_dict()
-
-            config_dict["piper_version"] = "1.3.0"
-            json.dump(config_dict, config_file, ensure_ascii=False, indent=2)
+            json.dump(
+                PiperConfig(
+                    num_symbols=self.num_symbols,
+                    num_speakers=self.num_speakers,
+                    sample_rate=self.sample_rate,
+                    espeak_voice=self.espeak_voice,
+                    phoneme_id_map=DEFAULT_PHONEME_ID_MAP,
+                    phoneme_type=PhonemeType.ESPEAK,
+                    piper_version="1.3.0",
+                ).to_dict(),
+                config_file,
+                ensure_ascii=False,
+                indent=2,
+            )
 
         phonemizer = EspeakPhonemizer()
         vad = SileroVoiceActivityDetector()

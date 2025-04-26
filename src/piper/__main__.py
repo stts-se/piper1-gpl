@@ -74,13 +74,13 @@ def main() -> None:
     parser.add_argument(
         "--debug", action="store_true", help="Print DEBUG messages to console"
     )
-    args, texts = parser.parse_known_args()
+    args, unknown_args = parser.parse_known_args()
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
     _LOGGER.debug(args)
 
     texts: Iterable[str]
-    if texts:
-        texts = [" ".join(texts)]
+    if unknown_args:
+        texts = [" ".join(unknown_args)]
     else:
         texts = sys.stdin
 
