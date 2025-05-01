@@ -1,7 +1,5 @@
 """Tests for Piper."""
 
-import tempfile
-import wave
 from pathlib import Path
 
 from piper import PiperVoice
@@ -93,9 +91,9 @@ def test_phonemize_synthesize() -> None:
         2,  # EOS
     ]
 
-    audio = voice.synthesize_ids_to_raw(phoneme_ids[0])
-    assert len(audio) == 22050 * 2  # 1 second of silence (16-bit samples)
-    assert not any(audio)
+    audio_array = voice.phoneme_ids_to_audio(phoneme_ids[0])
+    assert len(audio_array) == voice.config.sample_rate  # 1 second of silence
+    assert not any(audio_array)
 
 
 def test_language_switch_flags_removed() -> None:
@@ -108,43 +106,25 @@ def test_language_switch_flags_removed() -> None:
 def test_synthesize() -> None:
     """Test text to audio synthesis with WAV output."""
     voice = PiperVoice.load(_TEST_VOICE)
+    audio_chunks = list(voice.synthesize("This is a test. This is another test."))
 
-    with tempfile.NamedTemporaryFile("wb+", suffix=".wav") as temp_wav_file:
-        with wave.open(temp_wav_file, "wb") as wav_file:
-            voice.synthesize("This is a test.", wav_file)
+    # One chunk per sentence
+    assert len(audio_chunks) == 2
+    for chunk in audio_chunks:
+        sample_rate = chunk.sample_rate
+        assert sample_rate == voice.config.sample_rate
+        assert chunk.sample_width == 2
+        assert chunk.sample_channels == 1
 
-        temp_wav_file.seek(0)
+        # Verify 1 second of silence
+        assert len(chunk.audio_float_array) == sample_rate
+        assert not any(chunk.audio_float_array)
 
-        # Verify audio
-        with wave.open(temp_wav_file, "rb") as wav_file:
-            assert wav_file.getframerate() == 22050
-            assert wav_file.getsampwidth() == 2
-            assert wav_file.getnchannels() == 1
+        assert len(chunk.audio_int16_array) == sample_rate
+        assert not any(chunk.audio_int16_array)
 
-            audio = wav_file.readframes(wav_file.getnframes())
-            assert len(audio) == 22050 * 2  # 1 second of silence
-            assert not any(audio)
-
-
-def test_synthesize_stream_raw() -> None:
-    """Test text to audio synthesis with raw stream output."""
-    voice = PiperVoice.load(_TEST_VOICE)
-
-    audio_stream = voice.synthesize_stream_raw("This is a test. This is another test.")
-    audio_iter = iter(audio_stream)
-
-    # This is a test.
-    audio = next(audio_iter)
-    assert len(audio) == 22050 * 2  # 1 second of silence
-    assert not any(audio)
-
-    # This is a another test.
-    audio = next(audio_iter)
-    assert len(audio) == 22050 * 2  # 1 second of silence
-    assert not any(audio)
-
-    # End of stream
-    assert next(audio_iter, None) is None
+        assert len(chunk.audio_int16_bytes) == sample_rate * 2
+        assert not any(chunk.audio_int16_bytes)
 
 
 def test_ar_tashkeel() -> None:

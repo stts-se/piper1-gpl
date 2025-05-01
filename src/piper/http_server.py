@@ -8,7 +8,7 @@ from pathlib import Path
 
 from flask import Flask, request
 
-from . import PiperVoice
+from . import PiperVoice, SynthesisConfig
 
 _LOGGER = logging.getLogger()
 
@@ -29,7 +29,12 @@ def main() -> None:
         "--noise-scale", "--noise_scale", type=float, help="Generator noise"
     )
     parser.add_argument(
-        "--noise-w", "--noise_w", type=float, help="Phoneme width noise"
+        "--noise-w-scale",
+        "--noise_w_scale",
+        "--noise-w",
+        "--noise_w",
+        type=float,
+        help="Phoneme width noise",
     )
     #
     parser.add_argument("--cuda", action="store_true", help="Use GPU")
@@ -76,13 +81,17 @@ def main() -> None:
 
     # Load voice
     voice = PiperVoice.load(model_path, use_cuda=args.cuda)
-    synthesize_args = {
-        "speaker_id": args.speaker,
-        "length_scale": args.length_scale,
-        "noise_scale": args.noise_scale,
-        "noise_w": args.noise_w,
-        "sentence_silence": args.sentence_silence,
-    }
+    syn_config = SynthesisConfig(
+        speaker_id=args.speaker,
+        length_scale=args.length_scale,
+        noise_scale=args.noise_scale,
+        noise_w_scale=args.noise_w_scale,
+    )
+
+    # 16-bit samples for silence
+    silence_int16_bytes = bytes(
+        int(voice.config.sample_rate * args.sentence_silence * 2)
+    )
 
     # Create web server
     app = Flask(__name__)
@@ -100,8 +109,20 @@ def main() -> None:
 
         _LOGGER.debug("Synthesizing text: %s", text)
         with io.BytesIO() as wav_io:
-            with wave.open(wav_io, "wb") as wav_file:
-                voice.synthesize(text, wav_file, **synthesize_args)
+            wav_file: wave.Wave_write = wave.open(wav_io, "wb")
+            with wav_file:
+                wav_params_set = False
+                for i, audio_chunk in enumerate(voice.synthesize(text, syn_config)):
+                    if not wav_params_set:
+                        wav_file.setframerate(audio_chunk.sample_rate)
+                        wav_file.setsampwidth(audio_chunk.sample_width)
+                        wav_file.setnchannels(audio_chunk.sample_channels)
+                        wav_params_set = True
+
+                    if i > 0:
+                        wav_file.writeframes(silence_int16_bytes)
+
+                    wav_file.writeframes(audio_chunk.audio_int16_bytes)
 
             return wav_io.getvalue()
 

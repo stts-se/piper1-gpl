@@ -41,7 +41,7 @@ class PiperConfig:
     # Inference settings
     length_scale: float = DEFAULT_LENGTH_SCALE
     noise_scale: float = DEFAULT_NOISE_SCALE
-    noise_w: float = DEFAULT_NOISE_W_SCALE
+    noise_w_scale: float = DEFAULT_NOISE_W_SCALE
 
     @staticmethod
     def from_dict(config: dict[str, Any]) -> "PiperConfig":
@@ -53,7 +53,7 @@ class PiperConfig:
             sample_rate=config["audio"]["sample_rate"],
             noise_scale=inference.get("noise_scale", DEFAULT_NOISE_SCALE),
             length_scale=inference.get("length_scale", DEFAULT_LENGTH_SCALE),
-            noise_w=inference.get("noise_w", DEFAULT_NOISE_W_SCALE),
+            noise_w_scale=inference.get("noise_w", DEFAULT_NOISE_W_SCALE),
             #
             espeak_voice=config["espeak"]["voice"],
             phoneme_id_map=config["phoneme_id_map"],
@@ -76,7 +76,7 @@ class PiperConfig:
             "inference": {
                 "noise_scale": self.noise_scale,
                 "length_scale": self.length_scale,
-                "noise_w": self.noise_w,
+                "noise_w": self.noise_w_scale,
             },
             "phoneme_id_map": self.phoneme_id_map,
         }
@@ -85,3 +85,15 @@ class PiperConfig:
             config_dict["piper_version"] = self.piper_version
 
         return config_dict
+
+
+@dataclass
+class SynthesisConfig:
+    """Configuration for Piper synthesis."""
+
+    speaker_id: Optional[int] = None
+    length_scale: Optional[float] = None
+    noise_scale: Optional[float] = None
+    noise_w_scale: Optional[float] = None
+    normalize_audio: bool = True
+    volume: float = 1.0

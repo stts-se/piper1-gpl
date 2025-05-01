@@ -10,7 +10,7 @@ import wave
 from collections.abc import Iterable
 from pathlib import Path
 
-from . import PiperVoice
+from . import PiperVoice, SynthesisConfig
 from .audio_playback import AudioPlayer
 
 _FILE = Path(__file__)
@@ -57,7 +57,12 @@ def main() -> None:
         "--noise-scale", "--noise_scale", type=float, help="Generator noise"
     )
     parser.add_argument(
-        "--noise-w", "--noise_w", type=float, help="Phoneme width noise"
+        "--noise-w-scale",
+        "--noise_w_scale",
+        "--noise-w",
+        "--noise_w",
+        type=float,
+        help="Phoneme width noise",
     )
     #
     parser.add_argument("--cuda", action="store_true", help="Use GPU")
@@ -68,6 +73,12 @@ def main() -> None:
         type=float,
         default=0.0,
         help="Seconds of silence after each sentence",
+    )
+    parser.add_argument(
+        "--volume", type=float, default=1.0, help="Volume multiplier (default: 1.0)"
+    )
+    parser.add_argument(
+        "--no-normalize", action="store_true", help="Don't normalize audio"
     )
     #
     parser.add_argument(
@@ -129,21 +140,46 @@ def main() -> None:
     # Load voice
     _LOGGER.debug("Loading voice: '%s'", model_path)
     voice = PiperVoice.load(model_path, use_cuda=args.cuda)
-    synthesize_args = {
-        "speaker_id": args.speaker,
-        "length_scale": args.length_scale,
-        "noise_scale": args.noise_scale,
-        "noise_w": args.noise_w,
-        "sentence_silence": args.sentence_silence,
-    }
+    syn_config = SynthesisConfig(
+        speaker_id=args.speaker,
+        length_scale=args.length_scale,
+        noise_scale=args.noise_scale,
+        noise_w_scale=args.noise_w_scale,
+        normalize_audio=(not args.no_normalize),
+        volume=args.volume,
+    )
 
     wav_file: wave.Wave_write
+
+    # 16-bit samples for silence
+    silence_int16_bytes = bytes(
+        int(voice.config.sample_rate * args.sentence_silence * 2)
+    )
+
+    def lines_to_wav() -> None:
+        wav_params_set = False
+        for line in lines():
+            for i, audio_chunk in enumerate(voice.synthesize(line, syn_config)):
+                if not wav_params_set:
+                    wav_file.setframerate(audio_chunk.sample_rate)
+                    wav_file.setsampwidth(audio_chunk.sample_width)
+                    wav_file.setnchannels(audio_chunk.sample_channels)
+                    wav_params_set = True
+
+                if i > 0:
+                    wav_file.writeframes(silence_int16_bytes)
+
+                wav_file.writeframes(audio_chunk.audio_int16_bytes)
+
     if args.output_raw:
         # Write raw audio to stdout as its produced
         for line in lines():
-            audio_stream = voice.synthesize_stream_raw(line, **synthesize_args)
-            for audio_bytes in audio_stream:
-                sys.stdout.buffer.write(audio_bytes)
+            audio_stream = voice.synthesize(line, syn_config)
+            for i, audio_chunk in enumerate(audio_stream):
+                if i > 0:
+                    sys.stdout.buffer.write(silence_int16_bytes)
+
+                sys.stdout.buffer.write(audio_chunk.audio_int16_bytes)
                 sys.stdout.buffer.flush()
     elif args.output_dir:
         # Write multiple WAV files to a directory, one per line
@@ -154,7 +190,7 @@ def main() -> None:
             wav_path = output_dir / f"{time.monotonic_ns()}.wav"
             wav_file = wave.open(str(wav_path), "wb")
             with wav_file:
-                voice.synthesize(line, wav_file, **synthesize_args)
+                lines_to_wav()
 
             _LOGGER.info("Wrote %s", wav_path)
     else:
@@ -162,24 +198,19 @@ def main() -> None:
             # Write WAV file to stdout
             with tempfile.NamedTemporaryFile("wb+", suffix=".wav") as temp_wav_file:
                 wav_file = wave.open(temp_wav_file.name, "wb")
-                with wav_file:
-                    wav_file.setframerate(voice.config.sample_rate)
-                    wav_file.setsampwidth(2)  # 16-bit
-                    wav_file.setnchannels(1)  # mono
-
-                    for line in lines():
-                        voice.synthesize(
-                            line, wav_file, set_wav_params=False, **synthesize_args
-                        )
+                lines_to_wav()
 
                 temp_wav_file.seek(0)
                 shutil.copyfileobj(temp_wav_file, sys.stdout.buffer)
         elif (not args.output_file) and AudioPlayer.is_available():
+            # Play audio using ffplay
             with AudioPlayer(voice.config.sample_rate) as player:
                 for line in lines():
-                    audio_stream = voice.synthesize_stream_raw(line, **synthesize_args)
-                    for audio_bytes in audio_stream:
-                        player.play(audio_bytes)
+                    for i, audio_chunk in enumerate(voice.synthesize(line, syn_config)):
+                        if i > 0:
+                            player.play(silence_int16_bytes)
+
+                        player.play(audio_chunk.audio_int16_bytes)
         else:
             # Write to WAV file
             if not args.output_file:
@@ -190,14 +221,7 @@ def main() -> None:
 
             wav_file = wave.open(args.output_file, "wb")
             with wav_file:
-                wav_file.setframerate(voice.config.sample_rate)
-                wav_file.setsampwidth(2)  # 16-bit
-                wav_file.setnchannels(1)  # mono
-
-                for line in lines():
-                    voice.synthesize(
-                        line, wav_file, set_wav_params=False, **synthesize_args
-                    )
+                lines_to_wav()
 
 
 # -----------------------------------------------------------------------------

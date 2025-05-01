@@ -4,7 +4,6 @@ import json
 import logging
 import threading
 import unicodedata
-import wave
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
@@ -12,16 +11,44 @@ from typing import Any, Iterable, Optional, Union
 import numpy as np
 import onnxruntime
 
-from .config import PhonemeType, PiperConfig
+from .config import PhonemeType, PiperConfig, SynthesisConfig
 from .phoneme_ids import phonemes_to_ids
 from .phonemize_espeak import ESPEAK_DATA_DIR, EspeakPhonemizer
 from .tashkeel import TashkeelDiacritizer
-from .util import audio_float_to_int16
 
 _ESPEAK_PHONEMIZER: Optional[EspeakPhonemizer] = None
 _ESPEAK_PHONEMIZER_LOCK = threading.Lock()
 
+_DEFAULT_SYNTHESIS_CONFIG = SynthesisConfig()
+_MAX_WAV_VALUE = 32767.0
+
 _LOGGER = logging.getLogger(__name__)
+
+
+@dataclass
+class AudioChunk:
+    sample_rate: int
+    sample_width: int
+    sample_channels: int
+    audio_float_array: np.ndarray
+
+    _audio_int16_array: Optional[np.ndarray] = None
+    _audio_int16_bytes: Optional[bytes] = None
+
+    @property
+    def audio_int16_array(self) -> np.ndarray:
+        """Get audio as an int16 numpy array."""
+        if self._audio_int16_array is None:
+            self._audio_int16_array = np.clip(
+                self.audio_float_array * _MAX_WAV_VALUE, -_MAX_WAV_VALUE, _MAX_WAV_VALUE
+            ).astype(np.int16)
+
+        return self._audio_int16_array
+
+    @property
+    def audio_int16_bytes(self) -> bytes:
+        """Get audio as 16-bit PCM bytes."""
+        return self.audio_int16_array.tobytes()
 
 
 @dataclass
@@ -104,78 +131,63 @@ class PiperVoice:
     def synthesize(
         self,
         text: str,
-        wav_file: wave.Wave_write,
-        speaker_id: Optional[int] = None,
-        length_scale: Optional[float] = None,
-        noise_scale: Optional[float] = None,
-        noise_w: Optional[float] = None,
-        sentence_silence: float = 0.0,
-        set_wav_params: bool = True,
-    ):
-        """Synthesize WAV audio from text."""
-        if set_wav_params:
-            wav_file.setframerate(self.config.sample_rate)
-            wav_file.setsampwidth(2)  # 16-bit
-            wav_file.setnchannels(1)  # mono
+        syn_config: Optional[SynthesisConfig] = None,
+    ) -> Iterable[AudioChunk]:
+        """Synthesize one audio chunk per sentence from from text."""
+        if syn_config is None:
+            syn_config = _DEFAULT_SYNTHESIS_CONFIG
 
-        for audio_bytes in self.synthesize_stream_raw(
-            text,
-            speaker_id=speaker_id,
-            length_scale=length_scale,
-            noise_scale=noise_scale,
-            noise_w=noise_w,
-            sentence_silence=sentence_silence,
-        ):
-            wav_file.writeframes(audio_bytes)
-
-    def synthesize_stream_raw(
-        self,
-        text: str,
-        speaker_id: Optional[int] = None,
-        length_scale: Optional[float] = None,
-        noise_scale: Optional[float] = None,
-        noise_w: Optional[float] = None,
-        sentence_silence: float = 0.0,
-    ) -> Iterable[bytes]:
-        """Synthesize raw audio per sentence from text."""
         sentence_phonemes = self.phonemize(text)
-
-        # 16-bit mono
-        num_silence_samples = int(sentence_silence * self.config.sample_rate)
-        silence_bytes = bytes(num_silence_samples * 2)
 
         for phonemes in sentence_phonemes:
             phoneme_ids = self.phonemes_to_ids(phonemes)
-            yield self.synthesize_ids_to_raw(
-                phoneme_ids,
-                speaker_id=speaker_id,
-                length_scale=length_scale,
-                noise_scale=noise_scale,
-                noise_w=noise_w,
-            ) + silence_bytes
+            audio = self.phoneme_ids_to_audio(phoneme_ids, syn_config)
 
-    def synthesize_ids_to_raw(
-        self,
-        phoneme_ids: list[int],
-        speaker_id: Optional[int] = None,
-        length_scale: Optional[float] = None,
-        noise_scale: Optional[float] = None,
-        noise_w: Optional[float] = None,
-    ) -> bytes:
+            if syn_config.normalize_audio:
+                max_val = np.max(np.abs(audio))
+                if max_val < 1e-8:
+                    # Prevent division by zero
+                    audio = np.zeros_like(audio)
+                else:
+                    audio = audio / max_val
+
+            if syn_config.volume != 1.0:
+                audio = audio * syn_config.volume
+
+            audio = np.clip(audio, -1.0, 1.0).astype(np.float32)
+
+            yield AudioChunk(
+                sample_rate=self.config.sample_rate,
+                sample_width=2,
+                sample_channels=1,
+                audio_float_array=audio,
+            )
+
+    def phoneme_ids_to_audio(
+        self, phoneme_ids: list[int], syn_config: Optional[SynthesisConfig] = None
+    ) -> np.ndarray:
         """Synthesize raw audio from phoneme ids."""
+        if syn_config is None:
+            syn_config = _DEFAULT_SYNTHESIS_CONFIG
+
+        speaker_id = syn_config.speaker_id
+        length_scale = syn_config.length_scale
+        noise_scale = syn_config.noise_scale
+        noise_w_scale = syn_config.noise_w_scale
+
         if length_scale is None:
             length_scale = self.config.length_scale
 
         if noise_scale is None:
             noise_scale = self.config.noise_scale
 
-        if noise_w is None:
-            noise_w = self.config.noise_w
+        if noise_w_scale is None:
+            noise_w_scale = self.config.noise_w_scale
 
         phoneme_ids_array = np.expand_dims(np.array(phoneme_ids, dtype=np.int64), 0)
         phoneme_ids_lengths = np.array([phoneme_ids_array.shape[1]], dtype=np.int64)
         scales = np.array(
-            [noise_scale, length_scale, noise_w],
+            [noise_scale, length_scale, noise_w_scale],
             dtype=np.float32,
         )
 
@@ -196,12 +208,10 @@ class PiperVoice:
             sid = np.array([speaker_id], dtype=np.int64)
             args["sid"] = sid
 
-        # Synthesize through Onnx
+        # Synthesize through onnx
         audio = self.session.run(
             None,
             args,
-        )[
-            0
-        ].squeeze((0, 1))
-        audio = audio_float_to_int16(audio.squeeze())
-        return audio.tobytes()
+        )[0].squeeze()
+
+        return audio
