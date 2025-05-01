@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 import threading
 import unicodedata
 from dataclasses import dataclass
@@ -21,12 +22,16 @@ _ESPEAK_PHONEMIZER_LOCK = threading.Lock()
 
 _DEFAULT_SYNTHESIS_CONFIG = SynthesisConfig()
 _MAX_WAV_VALUE = 32767.0
+_PHONEME_BLOCK_PATTERN = re.compile(r"(\[\[.*?\]\])")
+_PUNCTUATION_PHONEMES = {".", "?", "!", ",", ";", ":"}
 
 _LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
 class AudioChunk:
+    """Chunk of raw audio."""
+
     sample_rate: int
     sample_width: int
     sample_channels: int
@@ -103,26 +108,51 @@ class PiperVoice:
         """Text to phonemes grouped by sentence."""
         global _ESPEAK_PHONEMIZER
 
-        # Arabic diacritization
-        if (self.config.espeak_voice == "ar") and self.use_tashkeel:
-            if self.tashkeel_diacritizier is None:
-                self.tashkeel_diacritizier = TashkeelDiacritizer()
+        if self.config.phoneme_type == PhonemeType.TEXT:
+            # Phonemes = codepoints
+            return [list(unicodedata.normalize("NFD", text))]
 
-            text = self.tashkeel_diacritizier(
-                text, taskeen_threshold=self.taskeen_threshold
-            )
+        if self.config.phoneme_type != PhonemeType.ESPEAK:
+            raise ValueError(f"Unexpected phoneme type: {self.config.phoneme_type}")
 
-        if self.config.phoneme_type == PhonemeType.ESPEAK:
+        phonemes: list[list[str]] = []
+        text_parts = _PHONEME_BLOCK_PATTERN.split(text)
+        for i, text_part in enumerate(text_parts):
+            if text_part.startswith("[["):
+                # Phonemes
+                if not phonemes:
+                    # Start new sentence
+                    phonemes.append([])
+
+                if (i > 0) and (text_parts[i - 1].endswith(" ")):
+                    phonemes[-1].append(" ")
+
+                phonemes[-1].extend(text_part[2:-2].strip())
+
+                if (i < (len(text_parts)) - 1) and (text_parts[i + 1].startswith(" ")):
+                    phonemes[-1].append(" ")
+
+                continue
+
+            # Arabic diacritization
+            if (self.config.espeak_voice == "ar") and self.use_tashkeel:
+                if self.tashkeel_diacritizier is None:
+                    self.tashkeel_diacritizier = TashkeelDiacritizer()
+
+                text_part = self.tashkeel_diacritizier(
+                    text_part, taskeen_threshold=self.taskeen_threshold
+                )
+
             with _ESPEAK_PHONEMIZER_LOCK:
                 if _ESPEAK_PHONEMIZER is None:
                     _ESPEAK_PHONEMIZER = EspeakPhonemizer(self.espeak_data_dir)
 
-                return _ESPEAK_PHONEMIZER.phonemize(self.config.espeak_voice, text)
+                text_part_phonemes = _ESPEAK_PHONEMIZER.phonemize(
+                    self.config.espeak_voice, text_part
+                )
+                phonemes.extend(text_part_phonemes)
 
-        if self.config.phoneme_type == PhonemeType.TEXT:
-            return [list(unicodedata.normalize("NFD", text))]
-
-        raise ValueError(f"Unexpected phoneme type: {self.config.phoneme_type}")
+        return phonemes
 
     def phonemes_to_ids(self, phonemes: list[str]) -> list[int]:
         """Phonemes to ids."""

@@ -143,3 +143,11 @@ def test_ar_tashkeel() -> None:
     voice.use_tashkeel = False
     phonemes = voice.phonemize("بسم الله الرحمن الرحيم")
     assert phonemes_without_diacritics == "".join(phonemes[0])
+
+
+def test_raw_phonemes() -> None:
+    """Test [[ phonemes block ]]."""
+    voice = PiperVoice.load(_TEST_VOICE)
+    phonemes = voice.phonemize("I am the [[ bˈætmæn ]] not [[bɹˈuːs wˈe‍ɪn]]")
+    phonemes_str = "".join("".join(ps) for ps in phonemes)
+    assert phonemes_str == "aɪɐm ðə bˈætmæn nˈɑːt bɹˈuːs wˈe‍ɪn"
