@@ -145,3 +145,21 @@ def test_synthesize_stream_raw() -> None:
 
     # End of stream
     assert next(audio_iter, None) is None
+
+
+def test_ar_tashkeel() -> None:
+    """Test Arabic diacritization."""
+    voice = PiperVoice.load(_TEST_VOICE)
+    voice.config.espeak_voice = "ar"
+
+    phonemes_with_diacritics = "bismˌi ʔalllˈahi ʔarrrˈaħmanˌi ʔarrrˈaħiːm"
+    phonemes_without_diacritics = "bˈismillˌaːh ʔˈarɹaħmˌaːn ʔarrˈaħiːm"
+
+    # Diacritization is enabled by default
+    phonemes = voice.phonemize("بسم الله الرحمن الرحيم")
+    assert phonemes_with_diacritics == "".join(phonemes[0])
+
+    # Disable diacritization
+    voice.use_tashkeel = False
+    phonemes = voice.phonemize("بسم الله الرحمن الرحيم")
+    assert phonemes_without_diacritics == "".join(phonemes[0])

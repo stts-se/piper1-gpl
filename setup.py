@@ -1,5 +1,6 @@
 """Needed so package data is included."""
 
+import itertools
 from pathlib import Path
 
 from skbuild import setup
@@ -8,6 +9,16 @@ MODULE_DIR = Path(__file__).parent / "src" / "piper"
 ESPEAK_NG_DATA_DIR = MODULE_DIR / "espeak-ng-data"
 ESPEAK_NG_DATA_FILES = [
     f.relative_to(MODULE_DIR) for f in ESPEAK_NG_DATA_DIR.rglob("*") if f.is_file()
+]
+TASHKEEL_DATA_DIR = MODULE_DIR / "tashkeel"
+TASHKEEL_DATA_FILES = [
+    (TASHKEEL_DATA_DIR / f_name).relative_to(MODULE_DIR)
+    for f_name in (
+        "model.onnx",
+        "input_id_map.json",
+        "target_id_map.json",
+        "hint_id_map.json",
+    )
 ]
 
 setup(
@@ -63,11 +74,13 @@ setup(
             "flask>=3,<4",
         ],
     },
-    packages=["piper", "piper.train"],
+    packages=["piper", "piper.tashkeel", "piper.train"],
     package_dir={"": "src"},
     include_package_data=True,
     package_data={
-        "piper": [str(p) for p in ESPEAK_NG_DATA_FILES],
+        "piper": [
+            str(p) for p in itertools.chain(ESPEAK_NG_DATA_FILES, TASHKEEL_DATA_FILES)
+        ],
     },
     cmake_install_dir="src/piper",
     entry_points={

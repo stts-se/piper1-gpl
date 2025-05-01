@@ -15,6 +15,7 @@ import onnxruntime
 from .config import PhonemeType, PiperConfig
 from .phoneme_ids import phonemes_to_ids
 from .phonemize_espeak import ESPEAK_DATA_DIR, EspeakPhonemizer
+from .tashkeel import TashkeelDiacritizer
 from .util import audio_float_to_int16
 
 _ESPEAK_PHONEMIZER: Optional[EspeakPhonemizer] = None
@@ -30,6 +31,11 @@ class PiperVoice:
     session: onnxruntime.InferenceSession
     config: PiperConfig
     espeak_data_dir: Path = ESPEAK_DATA_DIR
+
+    # For Arabic text only
+    use_tashkeel: bool = True
+    tashkeel_diacritizier: Optional[TashkeelDiacritizer] = None
+    taskeen_threshold: Optional[float] = 0.8
 
     @staticmethod
     def load(
@@ -70,8 +76,14 @@ class PiperVoice:
         """Text to phonemes grouped by sentence."""
         global _ESPEAK_PHONEMIZER
 
-        # TODO: Arabic diacritization
-        # https://github.com/mush42/libtashkeel/
+        # Arabic diacritization
+        if (self.config.espeak_voice == "ar") and self.use_tashkeel:
+            if self.tashkeel_diacritizier is None:
+                self.tashkeel_diacritizier = TashkeelDiacritizer()
+
+            text = self.tashkeel_diacritizier(
+                text, taskeen_threshold=self.taskeen_threshold
+            )
 
         if self.config.phoneme_type == PhonemeType.ESPEAK:
             with _ESPEAK_PHONEMIZER_LOCK:
