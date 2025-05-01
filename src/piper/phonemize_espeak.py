@@ -3,7 +3,7 @@
 import re
 import unicodedata
 from pathlib import Path
-from typing import List, Union
+from typing import Union
 
 from .const import (
     AUDIO_OUTPUT_SYNCHRONOUS,
@@ -34,7 +34,7 @@ class EspeakPhonemizer:
         if result < 0:
             raise EspeakError("Error initializing espeak-ng", result)
 
-    def phonemize(self, voice: str, text: str) -> List[List[str]]:
+    def phonemize(self, voice: str, text: str) -> list[list[str]]:
         """Text to phonemes grouped by sentence."""
         from . import espeak_ng  # avoid circular import
 
@@ -42,8 +42,8 @@ class EspeakPhonemizer:
         if result < 0:
             raise EspeakError(f"Error setting espeak-ng voice to {voice}", result)
 
-        all_phonemes: List[List[str]] = []
-        sentence_phonemes: List[str] = []
+        all_phonemes: list[list[str]] = []
+        sentence_phonemes: list[str] = []
 
         remaining_text = text
         while remaining_text:

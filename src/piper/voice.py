@@ -7,7 +7,7 @@ import unicodedata
 import wave
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Union
 
 import numpy as np
 import onnxruntime
@@ -51,7 +51,7 @@ class PiperVoice:
         with open(config_path, "r", encoding="utf-8") as config_file:
             config_dict = json.load(config_file)
 
-        providers: List[Union[str, Tuple[str, Dict[str, Any]]]]
+        providers: list[Union[str, tuple[str, dict[str, Any]]]]
         if use_cuda:
             providers = [
                 (
@@ -72,7 +72,7 @@ class PiperVoice:
             espeak_data_dir=Path(espeak_data_dir),
         )
 
-    def phonemize(self, text: str) -> List[List[str]]:
+    def phonemize(self, text: str) -> list[list[str]]:
         """Text to phonemes grouped by sentence."""
         global _ESPEAK_PHONEMIZER
 
@@ -97,7 +97,7 @@ class PiperVoice:
 
         raise ValueError(f"Unexpected phoneme type: {self.config.phoneme_type}")
 
-    def phonemes_to_ids(self, phonemes: List[str]) -> List[int]:
+    def phonemes_to_ids(self, phonemes: list[str]) -> list[int]:
         """Phonemes to ids."""
         return phonemes_to_ids(phonemes, self.config.phoneme_id_map)
 
@@ -156,7 +156,7 @@ class PiperVoice:
 
     def synthesize_ids_to_raw(
         self,
-        phoneme_ids: List[int],
+        phoneme_ids: list[int],
         speaker_id: Optional[int] = None,
         length_scale: Optional[float] = None,
         noise_scale: Optional[float] = None,

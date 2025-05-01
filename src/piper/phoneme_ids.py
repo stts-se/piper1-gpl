@@ -2,13 +2,13 @@
 
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Dict, List, Optional
+from typing import Optional
 
 from .const import BOS, EOS, PAD
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_PHONEME_ID_MAP: Dict[str, List[int]] = {
+DEFAULT_PHONEME_ID_MAP: dict[str, list[int]] = {
     "_": [0],
     "^": [1],
     "$": [2],
@@ -174,14 +174,14 @@ DEFAULT_PHONEME_ID_MAP: Dict[str, List[int]] = {
 
 
 def phonemes_to_ids(
-    phonemes: List[str],
+    phonemes: list[str],
     id_map: Optional[Mapping[str, Sequence[int]]] = None,
-) -> List[int]:
+) -> list[int]:
     """Phonemes to ids."""
     if not id_map:
         id_map = DEFAULT_PHONEME_ID_MAP
 
-    ids: List[int] = []
+    ids: list[int] = []
     ids.extend(id_map[BOS])
     ids.extend(id_map[PAD])
 

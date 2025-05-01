@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Mapping, Optional, Sequence
+from typing import Any, Mapping, Optional, Sequence
 
 DEFAULT_NOISE_SCALE = 0.667
 DEFAULT_LENGTH_SCALE = 1.0
@@ -44,7 +44,7 @@ class PiperConfig:
     noise_w: float = DEFAULT_NOISE_W_SCALE
 
     @staticmethod
-    def from_dict(config: Dict[str, Any]) -> "PiperConfig":
+    def from_dict(config: dict[str, Any]) -> "PiperConfig":
         inference = config.get("inference", {})
 
         return PiperConfig(
@@ -62,7 +62,7 @@ class PiperConfig:
             piper_version=config.get("piper_version"),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         config_dict = {
             "audio": {
                 "sample_rate": self.sample_rate,
