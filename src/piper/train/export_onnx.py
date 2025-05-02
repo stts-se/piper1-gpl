@@ -21,7 +21,9 @@ def main() -> None:
     parser.add_argument(
         "--checkpoint", required=True, help="Path to model checkpoint (.ckpt)"
     )
-    parser.add_argument("--output-file", required=True, help="Path to output file")
+    parser.add_argument(
+        "--output-file", required=True, help="Path to output file (.onnx)"
+    )
 
     parser.add_argument(
         "--debug", action="store_true", help="Print DEBUG messages to the console"
@@ -101,7 +103,7 @@ def main() -> None:
             "output": {0: "batch_size", 2: "time"},
         },
     )
-    _LOGGER.info("Exported encoder to %s", output_path)
+    _LOGGER.info("Exported model to %s", output_path)
 
 
 # -----------------------------------------------------------------------------
