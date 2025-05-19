@@ -118,6 +118,8 @@ def main() -> None:
         if not text:
             raise ValueError("No text provided")
 
+        _LOGGER.debug(data)
+
         model_id = data.get("voice", default_model_id)
         voice = loaded_voices.get(model_id)
         if voice is None:
@@ -137,7 +139,15 @@ def main() -> None:
         if (voice.config.num_speakers > 1) and (speaker_id is None):
             speaker = data.get("speaker")
             if speaker:
-                speaker_id = voice.config.speaker_id_map.get(speaker, args.speaker)
+                speaker_id = voice.config.speaker_id_map.get(speaker)
+
+            if speaker_id is None:
+                _LOGGER.warning(
+                    "Speaker not found: '%s' in %s",
+                    speaker,
+                    voice.config.speaker_id_map.keys(),
+                )
+                speaker_id = args.speaker or 0
 
         if (speaker_id is not None) and (speaker_id > voice.config.num_speakers):
             speaker_id = 0
@@ -176,7 +186,7 @@ def main() -> None:
             ),
         )
 
-        _LOGGER.debug("Synthesizing text: %s", text)
+        _LOGGER.debug("Synthesizing text: '%s' with config=%s", text, syn_config)
         with io.BytesIO() as wav_io:
             wav_file: wave.Wave_write = wave.open(wav_io, "wb")
             with wav_file:
