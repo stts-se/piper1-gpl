@@ -45,7 +45,36 @@ If you have [ffplay][] installed, omit `-f` to hear the audio immediately:
 python3 -m piper -m en_US-lessac-medium -- 'This will play on your speakers.'
 ```
 
-Running Piper this way is slow since it needs to load the model each time. Run the web server unless you need to stream audio (see `--output-raw` from `--help`).
+Running Piper this way is slow since it needs to load the model each time. Run the [web server](#web-server) unless you need to stream audio (see `--output-raw` from `--help`).
+
+Some other useful command-line options:
+
+* `--cuda` - enable GPU acceleration
+* `--input-file` - read input text from one or more files
+* `--sentence-silence` - add seconds of silence to all but the last sentence
+* `--volume` - adjust volume multiplier (default: 1.0)
+* `--no-normalize` - disable automatic volume normalization
+
+### Raw Phonemes
+
+You can inject raw espeak-ng phonemes with `[[ <phonemes> ]]` blocks. For example:
+
+```
+I am the [[ bˈætmæn ]] not [[bɹˈuːs wˈe‍ɪn]]
+```
+
+To get phonemes from espeak-ng, use:
+
+``` sh
+espeak-ng -v <VOICE> --ipa=3 -q <TEXT>
+```
+
+For example:
+
+``` sh
+espeak-ng -v en-us --ipa=3 -q batman
+bˈætmæn
+```
 
 ## Web Server
 
