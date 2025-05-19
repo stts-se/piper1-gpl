@@ -2,9 +2,11 @@
 
 import argparse
 import io
+import json
 import logging
 import wave
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from flask import Flask, request
 
@@ -79,33 +81,100 @@ def main() -> None:
             f"Unable to find voice: {model_path} (use piper.download_voices)"
         )
 
-    # Load voice
-    voice = PiperVoice.load(model_path, use_cuda=args.cuda)
-    syn_config = SynthesisConfig(
-        speaker_id=args.speaker,
-        length_scale=args.length_scale,
-        noise_scale=args.noise_scale,
-        noise_w_scale=args.noise_w_scale,
-    )
+    default_model_id = model_path.name.rstrip(".onnx")
 
-    # 16-bit samples for silence
-    silence_int16_bytes = bytes(
-        int(voice.config.sample_rate * args.sentence_silence * 2)
-    )
+    # Load voice
+    default_voice = PiperVoice.load(model_path, use_cuda=args.cuda)
+    loaded_voices: Dict[str, PiperVoice] = {default_model_id: default_voice}
 
     # Create web server
     app = Flask(__name__)
 
-    @app.route("/", methods=["GET", "POST"])
-    def app_synthesize() -> bytes:
-        if request.method == "POST":
-            text = request.data.decode("utf-8")
-        else:
-            text = request.args.get("text", "")
+    @app.route("/voices", methods=["GET"])
+    def app_voices() -> Dict[str, Any]:
+        voices_dict: Dict[str, Any] = {}
+        config_paths: List[Path] = [Path(f"{model_path}.json")]
 
-        text = text.strip()
+        for data_dir in args.data_dir:
+            for onnx_path in Path(data_dir).glob("*.onnx"):
+                config_path = Path(f"{onnx_path}.json")
+                if config_path.exists():
+                    config_paths.append(config_path)
+
+        for config_path in config_paths:
+            model_id = config_path.name.rstrip(".onnx.json")
+            if model_id in voices_dict:
+                continue
+
+            with open(config_path, "r", encoding="utf-8") as config_file:
+                voices_dict[model_id] = json.load(config_file)
+
+        return voices_dict
+
+    @app.route("/", methods=["POST"])
+    def app_synthesize() -> bytes:
+        data = json.loads(request.data)
+        text = data.get("text", "").strip()
         if not text:
             raise ValueError("No text provided")
+
+        model_id = data.get("voice", default_model_id)
+        voice = loaded_voices.get(model_id)
+        if voice is None:
+            for data_dir in args.data_dir:
+                maybe_model_path = Path(data_dir) / f"{model_id}.onnx"
+                if maybe_model_path.exists():
+                    _LOGGER.debug("Loading voice %s", model_id)
+                    voice = PiperVoice.load(maybe_model_path, use_cuda=args.cuda)
+                    loaded_voices[model_id] = voice
+                    break
+
+        if voice is None:
+            _LOGGER.warning("Voice not found: %s. Using default voice.", model_id)
+            voice = default_voice
+
+        speaker_id: Optional[int] = data.get("speaker_id")
+        if (voice.config.num_speakers > 1) and (speaker_id is None):
+            speaker = data.get("speaker")
+            if speaker:
+                speaker_id = voice.config.speaker_id_map.get(speaker, args.speaker)
+
+        if (speaker_id is not None) and (speaker_id > voice.config.num_speakers):
+            speaker_id = 0
+
+        syn_config = SynthesisConfig(
+            speaker_id=speaker_id,
+            length_scale=float(
+                data.get(
+                    "length_scale",
+                    (
+                        args.length_scale
+                        if args.length_scale is not None
+                        else voice.config.length_scale
+                    ),
+                )
+            ),
+            noise_scale=float(
+                data.get(
+                    "noise_scale",
+                    (
+                        args.noise_scale
+                        if args.noise_scale is not None
+                        else voice.config.noise_scale
+                    ),
+                )
+            ),
+            noise_w_scale=float(
+                data.get(
+                    "noise_w_scale",
+                    (
+                        args.noise_w_scale
+                        if args.noise_w_scale is not None
+                        else voice.config.noise_w_scale
+                    ),
+                )
+            ),
+        )
 
         _LOGGER.debug("Synthesizing text: %s", text)
         with io.BytesIO() as wav_io:
@@ -120,7 +189,13 @@ def main() -> None:
                         wav_params_set = True
 
                     if i > 0:
-                        wav_file.writeframes(silence_int16_bytes)
+                        wav_file.writeframes(
+                            bytes(
+                                int(
+                                    voice.config.sample_rate * args.sentence_silence * 2
+                                )
+                            )
+                        )
 
                     wav_file.writeframes(audio_chunk.audio_int16_bytes)
 

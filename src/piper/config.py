@@ -36,6 +36,9 @@ class PiperConfig:
     phoneme_type: PhonemeType
     """espeak or text"""
 
+    speaker_id_map: Mapping[str, int]
+    """Speaker -> id"""
+
     piper_version: Optional[str] = None
 
     # Inference settings
@@ -58,6 +61,7 @@ class PiperConfig:
             espeak_voice=config["espeak"]["voice"],
             phoneme_id_map=config["phoneme_id_map"],
             phoneme_type=PhonemeType(config.get("phoneme_type", PhonemeType.ESPEAK)),
+            speaker_id_map=config.get("speaker_id_map", {}),
             #
             piper_version=config.get("piper_version"),
         )
@@ -79,6 +83,7 @@ class PiperConfig:
                 "noise_w": self.noise_w_scale,
             },
             "phoneme_id_map": self.phoneme_id_map,
+            "speaker_id_map": self.speaker_id_map,
         }
 
         if self.piper_version:
