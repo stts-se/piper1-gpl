@@ -28,6 +28,8 @@ def main() -> None:
     parser.add_argument(
         "--download-dir",
         "--download_dir",
+        "--data-dir",
+        "--data_dir",
         help="Directory to download voices into (default: current directory)",
     )
     parser.add_argument(

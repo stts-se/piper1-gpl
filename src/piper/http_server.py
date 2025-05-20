@@ -7,10 +7,12 @@ import logging
 import wave
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.request import urlopen
 
 from flask import Flask, request
 
 from . import PiperVoice, SynthesisConfig
+from .download_voices import VOICES_JSON, download_voice
 
 _LOGGER = logging.getLogger()
 
@@ -56,6 +58,11 @@ def main() -> None:
         default=[str(Path.cwd())],
         help="Data directory to check for downloaded models (default: current directory)",
     )
+    parser.add_argument(
+        "--download-dir",
+        "--download_dir",
+        help="Path to download voices (default: first data dir)",
+    )
     #
     parser.add_argument(
         "--debug", action="store_true", help="Print DEBUG messages to console"
@@ -63,6 +70,12 @@ def main() -> None:
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
     _LOGGER.debug(args)
+
+    if not args.download_dir:
+        # Download voices to first data directory if not specified
+        args.download_dir = args.data_dir[0]
+
+    download_dir = Path(args.download_dir)
 
     # Download voice if file doesn't exist
     model_path = Path(args.model)
@@ -92,6 +105,16 @@ def main() -> None:
 
     @app.route("/voices", methods=["GET"])
     def app_voices() -> Dict[str, Any]:
+        """List downloaded voices.
+
+        Outputs a JSON object with the format:
+        {
+          "<voice name>": { <voice config> },
+          ...
+        }
+
+        for each voice in your data directories.
+        """
         voices_dict: Dict[str, Any] = {}
         config_paths: List[Path] = [Path(f"{model_path}.json")]
 
@@ -111,8 +134,57 @@ def main() -> None:
 
         return voices_dict
 
+    @app.route("/all-voices", methods=["GET"])
+    def app_all_voices() -> Dict[str, Any]:
+        """List all Piper voices.
+
+        Outputs voices.json from the piper-voices repo on HuggingFace.
+        See: https://huggingface.co/rhasspy/piper-voices
+        """
+        with urlopen(VOICES_JSON) as response:
+            return json.load(response)
+
+    @app.route("/download", methods=["POST"])
+    def app_download() -> str:
+        """Download a voice.
+
+        Downloads the .onnx and .onnx.json file from piper-voices repo on HuggingFace.
+        See: https://huggingface.co/rhasspy/piper-voices
+
+        Expects a JSON object with the format:
+        {
+          "voice": "<voice name>",   (required)
+          "force_redownload": false  (optional)
+        }
+
+        Returns the name of the voice.
+        Voice format must be <language>-<name>-<quality> like "en_US-lessac-medium".
+        """
+        data = json.loads(request.data)
+        model_id = data.get("voice")
+        if not model_id:
+            raise ValueError("voice is required")
+
+        force_redownload = data.get("force_redownload", False)
+        download_voice(model_id, download_dir, force_redownload=force_redownload)
+
+        return model_id
+
     @app.route("/", methods=["POST"])
     def app_synthesize() -> bytes:
+        """Synthesize audio from text.
+
+        Expects a JSON object with the format:
+        {
+          "text": "Text to speak.",      (required)
+          "voice": "<voice name>",       (optional)
+          "speaker": "<speaker name>",   (optional)
+          "speaker_id": "<speaker id>",  (optional, overrides speaker)
+          "length_scale": 1.0,           (optional)
+          "noise_scale": 0.667,          (optional)
+          "length_w_scale": 0.8          (optional)
+        }
+        """
         data = json.loads(request.data)
         text = data.get("text", "").strip()
         if not text:
