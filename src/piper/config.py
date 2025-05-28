@@ -1,6 +1,6 @@
 """Piper configuration"""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping, Optional, Sequence
 
@@ -36,7 +36,7 @@ class PiperConfig:
     phoneme_type: PhonemeType
     """espeak or text"""
 
-    speaker_id_map: Mapping[str, int]
+    speaker_id_map: Mapping[str, int] = field(default_factory=dict)
     """Speaker -> id"""
 
     piper_version: Optional[str] = None
