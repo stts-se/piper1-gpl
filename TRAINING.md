@@ -3,7 +3,14 @@
 Code for training new voices is included in `src/piper/train` and can be run with `script/train`.
 This uses [PyTorch Lightning][lighting] and the `LightningCLI`.
 
-You must install the training dependencies:
+You will need the following system packages installed (`apt-get`):
+
+* `build-essential`
+* `cmake`
+* `ninja-build`
+* `swig`
+
+Then clone the repo and install the training dependencies:
 
 ``` sh
 git clone https://github.com/OHF-voice/piper1-gpl.git
