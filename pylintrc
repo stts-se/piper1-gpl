@@ -1,5 +1,6 @@
 [MASTER]
-ignore=espeak_ng.py, src/piper/train/vits, src/piper/train/vits/monotonic_align
+ignore=espeakbridge.pyi, src/piper/train/vits, src/piper/train/vits/monotonic_align
+extension-pkg-allow-list = piper.espeakbridge
 
 [MESSAGES CONTROL]
 disable=
