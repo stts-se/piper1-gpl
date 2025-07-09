@@ -4,9 +4,7 @@
 cmake_minimum_required(VERSION 3.18)
 project(piper LANGUAGES C CXX)
 
-include(UseSWIG)
 include(ExternalProject)
-find_package(SWIG REQUIRED)
 
 # scikit-build-core will forward Python_* variables
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
@@ -52,36 +50,29 @@ include_directories(
     ${ESPEAKNG_INSTALL_DIR}/include
 )
 
-# Build the SWIG module
-set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/src/piper)
-
-swig_add_library(espeak_ng
-    TYPE MODULE
-    LANGUAGE python
-    SOURCES espeak_ng.i
+# espeak bridge
+add_library(espeakbridge MODULE
+    src/piper/espeakbridge.c
 )
 
-add_dependencies(${SWIG_MODULE_espeak_ng_REAL_NAME} espeak_ng_external)
-
-# Include the espeak-ng headers and link the static lib
-include_directories(${CMAKE_BINARY_DIR}/espeak_ng-install/include)
-target_link_libraries(${SWIG_MODULE_espeak_ng_REAL_NAME}
+add_dependencies(espeakbridge espeak_ng_external)
+target_compile_definitions(espeakbridge PRIVATE Py_LIMITED_API=0x03050000)
+target_link_libraries(espeakbridge
     ${ESPEAKNG_STATIC_LIB}
     ${UCD_STATIC_LIB}
-    Python::Module  # NOTE: Python::Python doesn't work in CI
+    Python::Module
+)
+target_include_directories(espeakbridge PRIVATE
+    ${ESPEAKNG_INSTALL_DIR}/include
+)
+set_target_properties(espeakbridge PROPERTIES
+    PREFIX ""
+    # OUTPUT_NAME "_espeakbridge"
 )
 
-set_target_properties(${SWIG_MODULE_espeak_ng_REAL_NAME} PROPERTIES
-    OUTPUT_NAME "_espeak_ng"
-)
-
-install(TARGETS ${SWIG_MODULE_espeak_ng_REAL_NAME}
+install(TARGETS espeakbridge
     LIBRARY DESTINATION .
     RUNTIME DESTINATION .
-)
-
-install(FILES ${CMAKE_SWIG_OUTDIR}/espeak_ng.py
-    DESTINATION .
 )
 
 # Copy espeak-ng-data

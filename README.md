@@ -123,14 +123,13 @@ See [TRAINING.md](TRAINING.md)
 
 ## Building Manually
 
-We use [scikit-build-core](https://github.com/scikit-build/scikit-build-core) along with [cmake](https://cmake.org/) and [swig](https://www.swig.org/) to build a Python module that directly embeds [espeak-ng][].
+We use [scikit-build-core](https://github.com/scikit-build/scikit-build-core) along with [cmake](https://cmake.org/) to build a Python module that directly embeds [espeak-ng][].
 
 You will need the following system packages installed (`apt-get`):
 
 * `build-essential`
 * `cmake`
 * `ninja-build`
-* `swig`
 
 To create a dev environment:
 

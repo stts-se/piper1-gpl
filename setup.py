@@ -6,6 +6,7 @@ from pathlib import Path
 from skbuild import setup
 
 MODULE_DIR = Path(__file__).parent / "src" / "piper"
+PIPER_DATA_FILES = ["py.typed", "espeakbridge.pyi"]
 ESPEAK_NG_DATA_DIR = MODULE_DIR / "espeak-ng-data"
 ESPEAK_NG_DATA_FILES = [
     f.relative_to(MODULE_DIR) for f in ESPEAK_NG_DATA_DIR.rglob("*") if f.is_file()
@@ -79,7 +80,10 @@ setup(
     include_package_data=True,
     package_data={
         "piper": [
-            str(p) for p in itertools.chain(ESPEAK_NG_DATA_FILES, TASHKEEL_DATA_FILES)
+            str(p)
+            for p in itertools.chain(
+                PIPER_DATA_FILES, ESPEAK_NG_DATA_FILES, TASHKEEL_DATA_FILES
+            )
         ],
     },
     cmake_install_dir="src/piper",

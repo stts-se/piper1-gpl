@@ -8,7 +8,6 @@ You will need the following system packages installed (`apt-get`):
 * `build-essential`
 * `cmake`
 * `ninja-build`
-* `swig`
 
 Then clone the repo and install the training dependencies:
 
