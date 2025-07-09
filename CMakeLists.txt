@@ -7,7 +7,7 @@ project(piper LANGUAGES C CXX)
 include(ExternalProject)
 
 # scikit-build-core will forward Python_* variables
-find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python COMPONENTS Development.Module REQUIRED)
 message(STATUS "Python::Module = ${Python_LIBRARIES}")
 
 # Install location for espeak-ng
@@ -68,7 +68,6 @@ target_include_directories(espeakbridge PRIVATE
 )
 set_target_properties(espeakbridge PROPERTIES
     PREFIX ""
-    # OUTPUT_NAME "_espeakbridge"
 )
 
 install(TARGETS espeakbridge
