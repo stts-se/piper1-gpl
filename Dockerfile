@@ -2,7 +2,7 @@ FROM python:3.12 AS builder
 
 RUN apt-get update && \
     apt-get install --yes --no-install-recommends \
-      build-essential cmake ninja-build swig git
+      build-essential cmake ninja-build git
 
 WORKDIR /app
 
