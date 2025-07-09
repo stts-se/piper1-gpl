@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         # os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-latest]
-        os: [ubuntu-latest]
+        os: [windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
         run: python -m pip install cibuildwheel==2.23.2
 
       - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: python -m cibuildwheel --output-dir wheelhouse --verbose
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
