@@ -8,6 +8,7 @@ include(ExternalProject)
 
 # scikit-build-core will forward Python_* variables
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+message(STATUS "Python::Module = ${Python_LIBRARIES}")
 
 # Install location for espeak-ng
 set(ESPEAKNG_BUILD_DIR ${CMAKE_BINARY_DIR}/espeak_ng)
