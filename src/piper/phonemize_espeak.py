@@ -16,7 +16,7 @@ class EspeakPhonemizer:
         """Initialize phonemizer."""
         from . import espeakbridge  # avoid circular import
 
-        espeakbridge.initialize()
+        espeakbridge.initialize(str(espeak_data_dir))
 
     def phonemize(self, voice: str, text: str) -> list[list[str]]:
         """Text to phonemes grouped by sentence."""

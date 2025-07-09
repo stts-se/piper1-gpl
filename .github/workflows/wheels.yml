@@ -10,8 +10,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -20,16 +19,22 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Piper
-        run: |
-          script/setup --dev
-          script/dev_build
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.23.2
 
       - name: Build wheels
-        run: |
-          script/package
+        run: python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+          CIBW_ARCHS: auto64
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: python -m pytest -vv {project}/tests
+
+          # Don't build PyPy and MUSL wheels for now
+          CIBW_SKIP: "pp* *-musllinux_*"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: piper-wheels-${{ matrix.os }}-${{ strategy.job-index }}
-          path: ./dist/*.whl
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl

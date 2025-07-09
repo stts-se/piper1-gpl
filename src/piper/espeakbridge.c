@@ -21,17 +21,24 @@
 #define CLAUSE_SEMICOLON (30 | CLAUSE_INTONATION_COMMA | CLAUSE_TYPE_CLAUSE)
 
 static PyObject *py_initialize(PyObject *self, PyObject *args) {
-    if (espeak_Initialize(AUDIO_OUTPUT_SYNCHRONOUS, 0, NULL, 0) < 0) {
+    const char *data_dir;
+    if (!PyArg_ParseTuple(args, "s", &data_dir)) {
+        return NULL;
+    }
+
+    if (espeak_Initialize(AUDIO_OUTPUT_SYNCHRONOUS, 0, data_dir, 0) < 0) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to initialize espeak-ng");
         return NULL;
     }
+
     Py_RETURN_NONE;
 }
 
 static PyObject *py_set_voice(PyObject *self, PyObject *args) {
     const char *voice;
-    if (!PyArg_ParseTuple(args, "s", &voice))
+    if (!PyArg_ParseTuple(args, "s", &voice)) {
         return NULL;
+    }
 
     if (espeak_SetVoiceByName(voice) < 0) {
         PyErr_Format(PyExc_RuntimeError, "Failed to set voice: %s", voice);
@@ -43,8 +50,9 @@ static PyObject *py_set_voice(PyObject *self, PyObject *args) {
 
 static PyObject *py_get_phonemes(PyObject *self, PyObject *args) {
     const char *text;
-    if (!PyArg_ParseTuple(args, "s", &text))
+    if (!PyArg_ParseTuple(args, "s", &text)) {
         return NULL;
+    }
 
     PyObject *phonemes_and_terminators = PyList_New(0);
 
@@ -85,7 +93,7 @@ static PyObject *py_get_phonemes(PyObject *self, PyObject *args) {
 }
 
 static PyMethodDef methods[] = {
-    {"initialize", py_initialize, METH_NOARGS, "Initialize espeak-ng"},
+    {"initialize", py_initialize, METH_VARARGS, "Initialize espeak-ng"},
     {"set_voice", py_set_voice, METH_VARARGS, "Set voice by name"},
     {"get_phonemes", py_get_phonemes, METH_VARARGS, "Get phonemes from text"},
     {NULL, NULL, 0, NULL}};
