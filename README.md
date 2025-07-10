@@ -12,12 +12,17 @@ pip install piper
 
 Usage:
 
-* [Command-line interface](docs/CLI.md)
-* [Web server](docs/API_HTTP.md)
-* [Python API](docs/API_Python.md)
-* [Training new voices](docs/TRAINING.md)
-* [Building manually](docs/BUILDING.md)
+* [Command-line interface][cli]
+* [Web server][api-http]
+* [Python API][api-python]
+* [Training new voices][training]
+* [Building manually][building]
 
 <!-- Links -->
 [piper]: https://github.com/rhasspy/piper
 [espeak-ng]: https://github.com/espeak-ng/espeak-ng
+[cli]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/CLI.md
+[api-http]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/APT_HTTP.md
+[api-python]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/API_Python.md
+[training]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/TRAINING.md
+[building]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/BUILDING.md

@@ -1,6 +1,6 @@
 # Command Line Interface
 
-The Piper command-line interface allows for quickly getting audio from text and trying out different voices. It can be slow, however, because it needs to load the voice model each time. For repeated use, the [web server](docs/API_HTTP.md) is recommended.
+The Piper command-line interface allows for quickly getting audio from text and trying out different voices. It can be slow, however, because it needs to load the voice model each time. For repeated use, the [web server](API_HTTP.md) is recommended.
 
 ## Installing
 
@@ -43,7 +43,7 @@ If you have [ffplay][] installed, omit `-f` to hear the audio immediately:
 python3 -m piper -m en_US-lessac-medium -- 'This will play on your speakers.'
 ```
 
-Running Piper this way is slow since it needs to load the model each time. Run the [web server](docs/API_HTTP.md) unless you need to stream audio (see `--output-raw` from `--help`).
+Running Piper this way is slow since it needs to load the model each time. Run the [web server](API_HTTP.md) unless you need to stream audio (see `--output-raw` from `--help`).
 
 Some other useful command-line options:
 
