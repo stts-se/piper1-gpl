@@ -10,18 +10,18 @@ Install with:
 pip install piper
 ```
 
-[Listen to voice samples](https://rhasspy.github.io/piper-samples)
-
-[Run directly in your browser](https://rhasspy.github.io/piper-samples/demo.html)
-
 Usage:
 
-* [Voices][voices]
-* [Command-line interface][cli]
-* [Web server][api-http]
-* [Python API][api-python]
-* [Training new voices][training]
-* [Building manually][building]
+* 🎧 [Samples][samples]
+* 💡 [Demo][demo]
+* 🗣️ [Voices][voices]
+* 🖥️ [Command-line interface][cli]
+* 🌐 [Web server][api-http]
+* 🐍 [Python API][api-python]
+* 🏋️ [Training new voices][training]
+* 🛠️ [Building manually][building]
+
+---
 
 People/projects using Piper:
 
@@ -49,3 +49,5 @@ People/projects using Piper:
 [training]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/TRAINING.md
 [building]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/BUILDING.md
 [voices]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/VOICES.md
+[samples]: https://rhasspy.github.io/piper-samples
+[demo]: https://rhasspy.github.io/piper-samples/demo.html
