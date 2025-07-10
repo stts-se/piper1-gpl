@@ -1,5 +1,7 @@
 """Tests for Piper."""
 
+import io
+import wave
 from pathlib import Path
 
 from piper import PiperVoice
@@ -104,7 +106,7 @@ def test_language_switch_flags_removed() -> None:
 
 
 def test_synthesize() -> None:
-    """Test text to audio synthesis with WAV output."""
+    """Test streaming text to audio synthesis."""
     voice = PiperVoice.load(_TEST_VOICE)
     audio_chunks = list(voice.synthesize("This is a test. This is another test."))
 
@@ -125,6 +127,31 @@ def test_synthesize() -> None:
 
         assert len(chunk.audio_int16_bytes) == sample_rate * 2
         assert not any(chunk.audio_int16_bytes)
+
+
+def test_synthesize_wav() -> None:
+    """Test text to audio synthesis with WAV output."""
+    voice = PiperVoice.load(_TEST_VOICE)
+
+    with io.BytesIO() as wav_io:
+        wav_output: wave.Wave_write = wave.open(wav_io, "wb")
+        with wav_output:
+            voice.synthesize_wav("This is a test. This is another test.", wav_output)
+
+        wav_io.seek(0)
+        wav_input: wave.Wave_read = wave.open(wav_io, "rb")
+        with wav_input:
+            assert wav_input.getframerate() == voice.config.sample_rate
+            assert wav_input.getsampwidth() == 2
+            assert wav_input.getnchannels() == 1
+
+            # Verify 2 seconds of silence (1 per sentence)
+            audio_data = wav_input.readframes(wav_input.getnframes())
+            assert (
+                len(audio_data)
+                == voice.config.sample_rate * wav_input.getsampwidth() * 2
+            )
+            assert not any(audio_data)
 
 
 def test_ar_tashkeel() -> None:
