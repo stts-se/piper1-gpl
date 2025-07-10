@@ -47,7 +47,7 @@ Running Piper this way is slow since it needs to load the model each time. Run t
 
 Some other useful command-line options:
 
-* `--cuda` - enable GPU acceleration
+* `--cuda` - enable GPU acceleration (requires `onnxruntime-gpu` package)
 * `--input-file` - read input text from one or more files
 * `--sentence-silence` - add seconds of silence to all but the last sentence
 * `--volume` - adjust volume multiplier (default: 1.0)
@@ -73,6 +73,12 @@ For example:
 espeak-ng -v en-us --ipa=3 -q batman
 bˈætmæn
 ```
+
+## Binary Releases
+
+* [amd64](https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_amd64.tar.gz) (64-bit desktop Linux)
+* [arm64](https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_arm64.tar.gz) (64-bit Raspberry Pi 4)
+* [armv7](https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_armv7.tar.gz) (32-bit Raspberry Pi 3/4)
 
 <!-- Links -->
 [samples]: https://rhasspy.github.io/piper-samples/

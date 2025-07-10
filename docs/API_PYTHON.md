@@ -43,6 +43,8 @@ To use CUDA for GPU acceleration:
 voice = PiperVoice.load(..., use_cuda=True)
 ```
 
+This requires the `onnxruntime-gpu` package to be installed.
+
 For streaming, use `PiperVoice.synthesize`:
 
 ``` python
