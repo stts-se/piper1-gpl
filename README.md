@@ -33,6 +33,7 @@ People/projects using Piper:
 * [mintPiper](https://github.com/evuraan/mintPiper)
 * [Vim-Piper](https://github.com/wolandark/vim-piper)
 * [POTaTOS](https://www.youtube.com/watch?v=Dz95q6XYjwY)
+* [Narration Studio](https://github.com/phyce/Narration-Studio)
 
 [![A library from the Open Home Foundation](https://www.openhomefoundation.org/badges/ohf-library.png)](https://www.openhomefoundation.org/)
 
