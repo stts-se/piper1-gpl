@@ -19,22 +19,22 @@ class PiperConfig:
     """Piper configuration"""
 
     num_symbols: int
-    """Number of phonemes"""
+    """Number of phonemes."""
 
     num_speakers: int
-    """Number of speakers"""
+    """Number of speakers."""
 
     sample_rate: int
-    """Sample rate of output audio"""
+    """Sample rate of output audio."""
 
     espeak_voice: str
-    """Name of espeak-ng voice or alphabet"""
+    """Name of espeak-ng voice or alphabet."""
 
     phoneme_id_map: Mapping[str, Sequence[int]]
-    """Phoneme -> [id,]"""
+    """Phoneme -> [id,]."""
 
     phoneme_type: PhonemeType
-    """espeak or text"""
+    """espeak or text."""
 
     speaker_id_map: Mapping[str, int] = field(default_factory=dict)
     """Speaker -> id"""
@@ -48,6 +48,7 @@ class PiperConfig:
 
     @staticmethod
     def from_dict(config: dict[str, Any]) -> "PiperConfig":
+        """Load configuration from a dictionary."""
         inference = config.get("inference", {})
 
         return PiperConfig(
@@ -67,6 +68,7 @@ class PiperConfig:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert configuration to a dictionary."""
         config_dict = {
             "audio": {
                 "sample_rate": self.sample_rate,
@@ -97,8 +99,19 @@ class SynthesisConfig:
     """Configuration for Piper synthesis."""
 
     speaker_id: Optional[int] = None
+    """Index of speaker to use (multi-speaker voices only)."""
+
     length_scale: Optional[float] = None
+    """Phoneme length scale (< 1 is faster, > 1 is slower)."""
+
     noise_scale: Optional[float] = None
+    """Amount of generator noise to add."""
+
     noise_w_scale: Optional[float] = None
+    """Amount of phoneme width noise to add."""
+
     normalize_audio: bool = True
+    """Enable/disable scaling audio samples to fit full range."""
+
     volume: float = 1.0
+    """Multiplier for audio samples (< 1 is quieter, > 1 is louder)."""

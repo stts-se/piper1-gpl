@@ -33,16 +33,27 @@ class AudioChunk:
     """Chunk of raw audio."""
 
     sample_rate: int
+    """Rate of chunk samples in Hertz."""
+
     sample_width: int
+    """Width of chunk samples in bytes."""
+
     sample_channels: int
+    """Number of channels in chunk samples."""
+
     audio_float_array: np.ndarray
+    """Audio data as float numpy array in [-1, 1]."""
 
     _audio_int16_array: Optional[np.ndarray] = None
     _audio_int16_bytes: Optional[bytes] = None
 
     @property
     def audio_int16_array(self) -> np.ndarray:
-        """Get audio as an int16 numpy array."""
+        """
+        Get audio as an int16 numpy array.
+
+        :return: Audio data as int16 numpy array.
+        """
         if self._audio_int16_array is None:
             self._audio_int16_array = np.clip(
                 self.audio_float_array * _MAX_WAV_VALUE, -_MAX_WAV_VALUE, _MAX_WAV_VALUE
@@ -52,7 +63,11 @@ class AudioChunk:
 
     @property
     def audio_int16_bytes(self) -> bytes:
-        """Get audio as 16-bit PCM bytes."""
+        """
+        Get audio as 16-bit PCM bytes.
+
+        :return: Audio data as signed 16-bit sample bytes.
+        """
         return self.audio_int16_array.tobytes()
 
 
@@ -61,8 +76,13 @@ class PiperVoice:
     """A voice for Piper."""
 
     session: onnxruntime.InferenceSession
+    """ONNX session."""
+
     config: PiperConfig
+    """Piper voice configuration."""
+
     espeak_data_dir: Path = ESPEAK_DATA_DIR
+    """Path to espeak-ng data directory."""
 
     # For Arabic text only
     use_tashkeel: bool = True
@@ -76,7 +96,15 @@ class PiperVoice:
         use_cuda: bool = False,
         espeak_data_dir: Union[str, Path] = ESPEAK_DATA_DIR,
     ) -> "PiperVoice":
-        """Load an ONNX model and config."""
+        """
+        Load an ONNX model and config.
+
+        :param model_path: Path to ONNX voice model.
+        :param config_path: Path to JSON voice config (defaults to model_path + ".json").
+        :param use_cuda: True if CUDA (GPU) should be used instead of CPU.
+        :param espeak_data_dir: Path to espeak-ng data dir (defaults to internal data).
+        :return: Voice object.
+        """
         if config_path is None:
             config_path = f"{model_path}.json"
             _LOGGER.debug("Guessing voice config path: %s", config_path)
@@ -107,7 +135,12 @@ class PiperVoice:
         )
 
     def phonemize(self, text: str) -> list[list[str]]:
-        """Text to phonemes grouped by sentence."""
+        """
+        Text to phonemes grouped by sentence.
+
+        :param text: Text to phonemize.
+        :return: List of phonemes for each sentence.
+        """
         global _ESPEAK_PHONEMIZER
 
         if self.config.phoneme_type == PhonemeType.TEXT:
@@ -157,7 +190,12 @@ class PiperVoice:
         return phonemes
 
     def phonemes_to_ids(self, phonemes: list[str]) -> list[int]:
-        """Phonemes to ids."""
+        """
+        Phonemes to ids.
+
+        :param phonemes: List of phonemes.
+        :return: List of phoneme ids.
+        """
         return phonemes_to_ids(phonemes, self.config.phoneme_id_map)
 
     def synthesize(
@@ -165,7 +203,12 @@ class PiperVoice:
         text: str,
         syn_config: Optional[SynthesisConfig] = None,
     ) -> Iterable[AudioChunk]:
-        """Synthesize one audio chunk per sentence from from text."""
+        """
+        Synthesize one audio chunk per sentence from from text.
+
+        :param text: Text to synthesize.
+        :param syn_config: Synthesis configuration.
+        """
         if syn_config is None:
             syn_config = _DEFAULT_SYNTHESIS_CONFIG
 
@@ -200,15 +243,25 @@ class PiperVoice:
         text: str,
         wav_file: wave.Wave_write,
         syn_config: Optional[SynthesisConfig] = None,
+        set_wav_format: bool = True,
     ) -> None:
-        """Synthesize and write WAV audio from text."""
+        """
+        Synthesize and write WAV audio from text.
+
+        :param text: Text to synthesize.
+        :param wav_file: WAV file writer.
+        :param syn_config: Synthesis configuration.
+        :param set_wav_format: True if the WAV format should be set automatically.
+        """
         first_chunk = True
         for audio_chunk in self.synthesize(text, syn_config=syn_config):
             if first_chunk:
-                # Set audio format on first chunk
-                wav_file.setframerate(audio_chunk.sample_rate)
-                wav_file.setsampwidth(audio_chunk.sample_width)
-                wav_file.setnchannels(audio_chunk.sample_channels)
+                if set_wav_format:
+                    # Set audio format on first chunk
+                    wav_file.setframerate(audio_chunk.sample_rate)
+                    wav_file.setsampwidth(audio_chunk.sample_width)
+                    wav_file.setnchannels(audio_chunk.sample_channels)
+
                 first_chunk = False
 
             wav_file.writeframes(audio_chunk.audio_int16_bytes)
@@ -216,7 +269,13 @@ class PiperVoice:
     def phoneme_ids_to_audio(
         self, phoneme_ids: list[int], syn_config: Optional[SynthesisConfig] = None
     ) -> np.ndarray:
-        """Synthesize raw audio from phoneme ids."""
+        """
+        Synthesize raw audio from phoneme ids.
+
+        :param phoneme_ids: List of phoneme ids.
+        :param syn_config: Synthesis configuration.
+        :return: Audio float numpy array from voice model (unnormalized, in range [-1, 1]).
+        """
         if syn_config is None:
             syn_config = _DEFAULT_SYNTHESIS_CONFIG
 
