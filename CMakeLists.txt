@@ -66,6 +66,10 @@ target_include_directories(espeakbridge PRIVATE
 )
 
 if(WIN32)
+    # Fix dll thunk issue (__imp_SYMBOL not found)
+    target_compile_definitions(espeakbridge PRIVATE LIBESPEAK_NG_EXPORT)
+
+    # Fix .dll suffix
     set_target_properties(espeakbridge PROPERTIES
         PREFIX ""
         SUFFIX ".pyd"
