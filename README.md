@@ -23,6 +23,6 @@ Usage:
 [espeak-ng]: https://github.com/espeak-ng/espeak-ng
 [cli]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/CLI.md
 [api-http]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/APT_HTTP.md
-[api-python]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/API_Python.md
+[api-python]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/API_PYTHON.md
 [training]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/TRAINING.md
 [building]: https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/BUILDING.md
