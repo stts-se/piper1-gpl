@@ -1,4 +1,4 @@
-![Piper](https://github.com/OHF-Voice/piper1-gpl/tree/main/etc/logo.png)
+![Piper](etc/logo.png)
 
 A fast and local neural text-to-speech engine that embeds [espeak-ng][] for phonemization.
 

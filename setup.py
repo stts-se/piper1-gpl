@@ -28,8 +28,6 @@ setup(
     description="Fast and local neural text-to-speech engine",
     url="http://github.com/OHF-voice/piper1-gpl",
     license="GPL-3.0-or-later",
-    long_description=open("README.md", "r", encoding="utf-8").read(),
-    long_description_content_type="text/markdown",
     author="The Home Assistant Authors",
     author_email="hello@home-assistant.io",
     keywords=["home", "assistant", "tts", "text-to-speech"],
