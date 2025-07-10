@@ -178,3 +178,9 @@ def test_raw_phonemes() -> None:
     phonemes = voice.phonemize("I am the [[ bˈætmæn ]] not [[bɹˈuːs wˈe‍ɪn]]")
     phonemes_str = "".join("".join(ps) for ps in phonemes)
     assert phonemes_str == "aɪɐm ðə bˈætmæn nˈɑːt bɹˈuːs wˈe‍ɪn"
+
+    # Check if entire text is just phonemes
+    phonemes = voice.phonemize("[[ bˈætmæn ɪz bɹˈuːs wˈe‍ɪn ]]")
+    assert len(phonemes) == 1
+    phonemes_str = "".join("".join(ps) for ps in phonemes)
+    assert phonemes_str == "bˈætmæn ɪz bɹˈuːs wˈe‍ɪn"

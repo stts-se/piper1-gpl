@@ -187,6 +187,10 @@ class PiperVoice:
                 )
                 phonemes.extend(text_part_phonemes)
 
+        if phonemes and (not phonemes[-1]):
+            # Remove empty phonemes
+            phonemes.pop()
+
         return phonemes
 
     def phonemes_to_ids(self, phonemes: list[str]) -> list[int]:
@@ -213,8 +217,12 @@ class PiperVoice:
             syn_config = _DEFAULT_SYNTHESIS_CONFIG
 
         sentence_phonemes = self.phonemize(text)
+        _LOGGER.debug("text=%s, phonemes=%s", text, sentence_phonemes)
 
         for phonemes in sentence_phonemes:
+            if not phonemes:
+                continue
+
             phoneme_ids = self.phonemes_to_ids(phonemes)
             audio = self.phoneme_ids_to_audio(phoneme_ids, syn_config)
 
