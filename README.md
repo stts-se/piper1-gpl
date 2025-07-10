@@ -1,16 +1,12 @@
 # Piper 1 (GPL)
 
-A self-contained version of [Piper][piper], the fast and local neural text-to-speech engine.
-
-This version directly embeds [espeak-ng][] and therefore has a [GPL license](COPYING).
+A fast and local neural text-to-speech engine that embeds [espeak-ng][] for phonemization.
 
 Install with:
 
 ``` sh
 pip install piper
 ```
-
-Usage:
 
 * 🎧 [Samples][samples]
 * 💡 [Demo][demo]
