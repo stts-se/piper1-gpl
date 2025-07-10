@@ -27,7 +27,7 @@ setup(
     version="1.3.0",
     description="Fast and local neural text-to-speech engine",
     url="http://github.com/OHF-voice/piper1-gpl",
-    license="Apache-2.0",
+    license="GPL-3.0-or-later",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     author="The Home Assistant Authors",

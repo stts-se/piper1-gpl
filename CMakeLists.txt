@@ -1,14 +1,13 @@
 # Builds Python module for Piper using espeak-ng and cmake.
 #
 # This is called automatically by scikit-build from setup.py.
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.26)
 project(piper LANGUAGES C CXX)
 
 include(ExternalProject)
 
 # scikit-build-core will forward Python_* variables
-find_package(Python COMPONENTS Development.Module REQUIRED)
-message(STATUS "Python::Module = ${Python_LIBRARIES}")
+find_package(Python COMPONENTS Development.Module Development.SABIModule REQUIRED)
 
 # Install location for espeak-ng
 set(ESPEAKNG_BUILD_DIR ${CMAKE_BINARY_DIR}/espeak_ng)
@@ -57,18 +56,25 @@ add_library(espeakbridge MODULE
 )
 
 add_dependencies(espeakbridge espeak_ng_external)
-target_compile_definitions(espeakbridge PRIVATE Py_LIMITED_API=0x03050000)
 target_link_libraries(espeakbridge
     ${ESPEAKNG_STATIC_LIB}
     ${UCD_STATIC_LIB}
-    Python::Module
+    Python::SABIModule
 )
 target_include_directories(espeakbridge PRIVATE
     ${ESPEAKNG_INSTALL_DIR}/include
 )
-set_target_properties(espeakbridge PROPERTIES
-    PREFIX ""
-)
+
+if(WIN32)
+    set_target_properties(espeakbridge PROPERTIES
+        PREFIX ""
+        SUFFIX ".pyd"
+    )
+else()
+    set_target_properties(espeakbridge PROPERTIES
+        PREFIX ""
+    )
+endif()
 
 install(TARGETS espeakbridge
     LIBRARY DESTINATION .
