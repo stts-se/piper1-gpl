@@ -7,7 +7,7 @@ The Piper command-line interface allows for quickly getting audio from text and 
 Install with:
 
 ``` sh
-pip install piper
+pip install piper-tts
 ```
 
 ## Downloading Voices

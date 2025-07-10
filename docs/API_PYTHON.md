@@ -3,7 +3,7 @@
 Install with:
 
 ``` sh
-pip install piper
+pip install piper-tts
 ```
 
 Download a voice, for example:

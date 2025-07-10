@@ -5,7 +5,7 @@ A fast and local neural text-to-speech engine that embeds [espeak-ng][] for phon
 Install with:
 
 ``` sh
-pip install piper
+pip install piper-tts
 ```
 
 * 🎧 [Samples][samples]
