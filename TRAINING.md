@@ -28,8 +28,7 @@ and then build the cython extension:
 If you are running from the repo, you will need to do a dev build:
 
 ``` sh
-script/setup --dev
-script/dev_build
+python3 setup.py build_ext --inplace
 ```
 
 To train, you must have a CSV file with `|` as a delimiter and the format:
@@ -47,7 +46,7 @@ The second column is the text that will be passed to [espeak-ng][] for phonemiza
 Run the training script:
 
 ``` sh
-script/train \
+python3 -m piper.train fit \
   --data.voice_name "<name of voice>" \
   --data.csv_path /path/to/metadata.csv \
   --data.audio_dir /path/to/audio/ \
@@ -73,7 +72,7 @@ where:
 
 Using `--ckpt_path` is recommend since it will speed up training a lot, even if the checkpoint is from a different language. Only `medium` quality checkpoints are supported without [tweaking other settings][audio-config].
 
-Run `script/train --help` for many more options.
+Run `python3 -m piper.train fit --help` for many more options.
 
 ## Exporting
 

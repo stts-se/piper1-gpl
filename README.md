@@ -9,7 +9,7 @@ This version directly embeds [espeak-ng][] and therefore has a [GPL license](COP
 Install with:
 
 ``` sh
-pip install piper1-tts
+pip install piper
 ```
 
 ## Downloading Voices
@@ -81,7 +81,7 @@ bˈætmæn
 Install the necessary dependencies:
 
 ``` sh
-python3 -m pip install piper1-tts[http]
+python3 -m pip install piper[http]
 ```
 
 
