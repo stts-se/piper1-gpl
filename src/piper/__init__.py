@@ -1,9 +1,11 @@
 """Piper text-to-speech engine."""
 
-from .config import PiperConfig, SynthesisConfig
-from .voice import PiperVoice
+from .config import PhonemeType, PiperConfig, SynthesisConfig
+from .voice import AudioChunk, PiperVoice
 
 __all__ = [
+    "AudioChunk",
+    "PhonemeType",
     "PiperConfig",
     "PiperVoice",
     "SynthesisConfig",

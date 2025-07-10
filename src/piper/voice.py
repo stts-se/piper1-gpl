@@ -5,6 +5,7 @@ import logging
 import re
 import threading
 import unicodedata
+import wave
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Optional, Union
@@ -23,7 +24,6 @@ _ESPEAK_PHONEMIZER_LOCK = threading.Lock()
 _DEFAULT_SYNTHESIS_CONFIG = SynthesisConfig()
 _MAX_WAV_VALUE = 32767.0
 _PHONEME_BLOCK_PATTERN = re.compile(r"(\[\[.*?\]\])")
-_PUNCTUATION_PHONEMES = {".", "?", "!", ",", ";", ":"}
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -79,6 +79,7 @@ class PiperVoice:
         """Load an ONNX model and config."""
         if config_path is None:
             config_path = f"{model_path}.json"
+            _LOGGER.debug("Guessing voice config path: %s", config_path)
 
         with open(config_path, "r", encoding="utf-8") as config_file:
             config_dict = json.load(config_file)
@@ -91,6 +92,7 @@ class PiperVoice:
                     {"cudnn_conv_algo_search": "HEURISTIC"},
                 )
             ]
+            _LOGGER.debug("Using CUDA")
         else:
             providers = ["CPUExecutionProvider"]
 
@@ -192,6 +194,24 @@ class PiperVoice:
                 sample_channels=1,
                 audio_float_array=audio,
             )
+
+    def synthesize_wav(
+        self,
+        text: str,
+        wav_file: wave.Wave_write,
+        syn_config: Optional[SynthesisConfig] = None,
+    ) -> None:
+        """Synthesize and write WAV audio from text."""
+        first_chunk = True
+        for audio_chunk in self.synthesize(text, syn_config=syn_config):
+            if first_chunk:
+                # Set audio format on first chunk
+                wav_file.setframerate(audio_chunk.sample_rate)
+                wav_file.setsampwidth(audio_chunk.sample_width)
+                wav_file.setnchannels(audio_chunk.sample_channels)
+                first_chunk = False
+
+            wav_file.writeframes(audio_chunk.audio_int16_bytes)
 
     def phoneme_ids_to_audio(
         self, phoneme_ids: list[int], syn_config: Optional[SynthesisConfig] = None

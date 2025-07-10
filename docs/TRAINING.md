@@ -1,6 +1,6 @@
 # Training
 
-Code for training new voices is included in `src/piper/train` and can be run with `script/train`.
+Code for training new voices is included in `src/piper/train` and can be run with `python3 -m piper.train fit`.
 This uses [PyTorch Lightning][lighting] and the `LightningCLI`.
 
 You will need the following system packages installed (`apt-get`):
@@ -16,7 +16,7 @@ git clone https://github.com/OHF-voice/piper1-gpl.git
 cd piper1-gpl
 python3 -m venv .venv
 source .venv/bin/activate
-python3 -m pip install -e .[dev]
+python3 -m pip install -e .[train]
 ```
 
 and then build the cython extension:
@@ -55,22 +55,22 @@ python3 -m piper.train fit \
   --data.cache_dir /path/to/cache/dir/ \
   --data.config_path /path/to/write/config.json \
   --data.batch_size 32 \
-  --ckpt_path /path/to/finetune.ckpt  # optional
+  --ckpt_path /path/to/finetune.ckpt  # optional but highly recommended
 ```
 
 where:
 
 * `data.voice_name` is the name of your voice (can be anything)
 * `data.csv_path` is the path to the CSV file with audio file names and text
-* `data.audio_dir` is the directory containing the audio files
-* `model.sample_rate` is the sample rate of the audio in hertz
+* `data.audio_dir` is the directory containing the audio files (usually `.wav`)
+* `model.sample_rate` is the sample rate of the audio in hertz (usually 22050)
 * `data.espeak_voice` is the espeak-ng voice/language like `en-us` (see `espeak-ng --voices`)
 * `data.cache_dir` is a directory where training artifacts are cached (phonemes, trimmed audio, etc.)
 * `data.config_path` is the path to write the voice's JSON config file
 * `data.batch_size` is the training batch size
 * `ckpt_path` is the path to an existing [Piper checkpoint][piper-checkpoints]
 
-Using `--ckpt_path` is recommend since it will speed up training a lot, even if the checkpoint is from a different language. Only `medium` quality checkpoints are supported without [tweaking other settings][audio-config].
+Using `--ckpt_path` is recommended since it will speed up training a lot, even if the checkpoint is from a different language. Only `medium` quality checkpoints are supported without [tweaking other settings][audio-config].
 
 Run `python3 -m piper.train fit --help` for many more options.
 
