@@ -1,4 +1,4 @@
-# Piper 1 (GPL)
+# Piper
 
 A fast and local neural text-to-speech engine that embeds [espeak-ng][] for phonemization.
 
