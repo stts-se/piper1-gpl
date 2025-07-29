@@ -40,7 +40,7 @@ static PyObject *py_set_voice(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    if (espeak_SetVoiceByName(voice) < 0) {
+    if (espeak_SetVoiceByName(voice) != EE_OK) {
         PyErr_Format(PyExc_RuntimeError, "Failed to set voice: %s", voice);
         return NULL;
     }

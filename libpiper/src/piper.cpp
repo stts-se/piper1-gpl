@@ -27,7 +27,7 @@ struct piper_synthesizer *piper_create(const char *model_path,
     auto config = json::parse(config_stream);
 
     if (espeak_Initialize(AUDIO_OUTPUT_SYNCHRONOUS, 0, espeak_data_path, 0) <
-        1) {
+        0) {
         return nullptr;
     }
 
@@ -134,7 +134,7 @@ int piper_synthesize_start(struct piper_synthesizer *synth, const char *text,
         return PIPER_ERR_GENERIC;
     }
 
-    if (espeak_SetVoiceByName(synth->espeak_voice.c_str()) < 0) {
+    if (espeak_SetVoiceByName(synth->espeak_voice.c_str()) != EE_OK) {
         return PIPER_ERR_GENERIC;
     }
 
