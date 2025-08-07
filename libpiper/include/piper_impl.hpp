@@ -27,6 +27,8 @@ const float DEFAULT_LENGTH_SCALE = 1.0f;
 const float DEFAULT_NOISE_SCALE = 0.667f;
 const float DEFAULT_NOISE_W_SCALE = 0.8f;
 
+const int DEFAULT_HOP_LENGTH = 256;
+
 // onnx
 Ort::Env ort_env{ORT_LOGGING_LEVEL_WARNING, "piper"};
 
@@ -53,6 +55,7 @@ struct piper_synthesizer {
     int sample_rate;
     int num_speakers;
     PhonemeIdMap phoneme_id_map;
+    int hop_length = DEFAULT_HOP_LENGTH;
 
     // Default synthesis settings for the voice
     float synth_length_scale = DEFAULT_LENGTH_SCALE;
@@ -68,6 +71,9 @@ struct piper_synthesizer {
     // synthesize state
     std::queue<std::vector<PhonemeId>> phoneme_id_queue;
     std::vector<float> chunk_samples;
+    std::string chunk_phonemes;
+    std::vector<int> chunk_phoneme_ids;
+    std::vector<int> chunk_alignments;
     float length_scale = DEFAULT_LENGTH_SCALE;
     float noise_scale = DEFAULT_NOISE_SCALE;
     float noise_w_scale = DEFAULT_NOISE_W_SCALE;

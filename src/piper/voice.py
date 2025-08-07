@@ -281,6 +281,9 @@ class PiperVoice:
             if (phoneme_id_samples is not None) and (
                 len(phoneme_id_samples) == len(phoneme_ids)
             ):
+                # Create phoneme/audio alignments by determining the phoneme ids
+                # produced by each phoneme (including the next PAD), and then
+                # summing the audio sample counts for those phoneme ids.
                 pad_ids = self.config.phoneme_id_map.get(PAD, [])
                 phoneme_id_idx = 0
                 phoneme_alignments = []

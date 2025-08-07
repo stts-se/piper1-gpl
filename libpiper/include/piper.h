@@ -41,6 +41,42 @@ typedef struct piper_audio_chunk {
    * \brief True if this is the last audio chunk.
    */
   bool is_last;
+
+  /**
+   * \brief Phoneme ids that produced this audio chunk.
+   *
+   * Ids will look like [1, 0, id1, 0, id2, 0, ..., 2] where:
+   * 0 = pad
+   * 1 = beginning of sentence
+   * 2 = end of sentence
+   */
+  const int *phoneme_ids;
+
+  /**
+   * \brief Number of ids in phoneme_ids.
+   */
+  size_t num_phoneme_ids;
+
+  /**
+   * \brief Audio sample count for each phoneme id.
+   *
+   * This includes the meta ids:
+   * 0 = pad
+   * 1 = beginning of sentence
+   * 2 = end of sentence
+   *
+   * Each actual phoneme id is followed by a 0 (pad).
+   * To get the total samples for a phoneme whose id is at index i, use
+   * alignments[i] + alignments[i + 1].
+   */
+  const int *alignments;
+
+  /**
+   * \brief Number of alignments.
+   *
+   * This should be the same as num_phoneme_ids.
+   */
+  size_t num_alignments;
 } piper_audio_chunk;
 
 /**

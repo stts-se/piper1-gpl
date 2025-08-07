@@ -3,6 +3,7 @@
 
 #include <array>
 #include <fstream>
+#include <limits>
 
 #include <espeak-ng/speak_lib.h>
 
@@ -257,12 +258,20 @@ int piper_synthesize_next(struct piper_synthesizer *synth,
         return PIPER_ERR_GENERIC;
     }
 
+    // Clear data from previous call
     synth->chunk_samples.clear();
+    synth->chunk_phonemes = "";
+    synth->chunk_phoneme_ids.clear();
+    synth->chunk_alignments.clear();
 
     chunk->sample_rate = synth->sample_rate;
     chunk->samples = nullptr;
     chunk->num_samples = 0;
     chunk->is_last = false;
+    chunk->phoneme_ids = nullptr;
+    chunk->num_phoneme_ids = 0;
+    chunk->alignments = nullptr;
+    chunk->num_alignments = 0;
 
     if (synth->phoneme_id_queue.empty()) {
         // Empty final chunk
@@ -314,14 +323,21 @@ int piper_synthesize_next(struct piper_synthesizer *synth,
     // From export_onnx.py
     std::array<const char *, 4> input_names = {"input", "input_lengths",
                                                "scales", "sid"};
-    std::array<const char *, 1> output_names = {"output"};
+
+    // Get all output names
+    std::vector<std::string> output_names_strs =
+        synth->session->GetOutputNames();
+    std::vector<const char *> output_names;
+    for (const auto &name : output_names_strs) {
+        output_names.push_back(name.c_str());
+    }
 
     // Infer
     auto output_tensors = synth->session->Run(
         Ort::RunOptions{nullptr}, input_names.data(), input_tensors.data(),
         input_tensors.size(), output_names.data(), output_names.size());
 
-    if ((output_tensors.size() != 1) || (!output_tensors.front().IsTensor())) {
+    if ((output_tensors.size() < 1) || (!output_tensors.front().IsTensor())) {
         return PIPER_ERR_GENERIC;
     }
 
@@ -336,6 +352,38 @@ int piper_synthesize_next(struct piper_synthesizer *synth,
               synth->chunk_samples.begin());
     chunk->samples = synth->chunk_samples.data();
 
+    chunk->is_last = synth->phoneme_id_queue.empty();
+
+    // Copy phoneme ids
+    for (auto phoneme_id : next_ids) {
+        if (phoneme_id < std::numeric_limits<int>::min() ||
+            phoneme_id > std::numeric_limits<int>::max()) {
+            continue;
+        }
+        synth->chunk_phoneme_ids.push_back(static_cast<int>(phoneme_id));
+    }
+
+    chunk->phoneme_ids = synth->chunk_phoneme_ids.data();
+    chunk->num_phoneme_ids = synth->chunk_phoneme_ids.size();
+
+    // Check for alignments
+    if (output_tensors.size() > 1) {
+        auto alignments_shape =
+            output_tensors[1].GetTensorTypeAndShapeInfo().GetShape();
+
+        chunk->num_alignments = alignments_shape[alignments_shape.size() - 1];
+        const float *alignments_tensor_data =
+            output_tensors[1].GetTensorData<float>();
+
+        synth->chunk_alignments.resize(chunk->num_alignments);
+        for (std::size_t i = 0; i < chunk->num_alignments; i++) {
+            synth->chunk_alignments[i] =
+                (int)(alignments_tensor_data[i] * synth->hop_length);
+        }
+
+        chunk->alignments = synth->chunk_alignments.data();
+    }
+
     // Clean up
     for (std::size_t i = 0; i < output_tensors.size(); i++) {
         Ort::detail::OrtRelease(output_tensors[i].release());
@@ -344,8 +392,6 @@ int piper_synthesize_next(struct piper_synthesizer *synth,
     for (std::size_t i = 0; i < input_tensors.size(); i++) {
         Ort::detail::OrtRelease(input_tensors[i].release());
     }
-
-    chunk->is_last = synth->phoneme_id_queue.empty();
 
     return PIPER_OK;
 }
