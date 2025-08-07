@@ -1,5 +1,6 @@
 """Phonemization and synthesis for Piper."""
 
+import itertools
 import json
 import logging
 import re
@@ -8,12 +9,13 @@ import unicodedata
 import wave
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Iterable, Optional, Tuple, Union
 
 import numpy as np
 import onnxruntime
 
 from .config import PhonemeType, PiperConfig, SynthesisConfig
+from .const import BOS, EOS, PAD
 from .phoneme_ids import phonemes_to_ids
 from .phonemize_espeak import ESPEAK_DATA_DIR, EspeakPhonemizer
 from .tashkeel import TashkeelDiacritizer
@@ -26,6 +28,12 @@ _MAX_WAV_VALUE = 32767.0
 _PHONEME_BLOCK_PATTERN = re.compile(r"(\[\[.*?\]\])")
 
 _LOGGER = logging.getLogger(__name__)
+
+
+@dataclass
+class PhonemeAlignment:
+    phoneme: str
+    num_samples: int
 
 
 @dataclass
@@ -44,8 +52,26 @@ class AudioChunk:
     audio_float_array: np.ndarray
     """Audio data as float numpy array in [-1, 1]."""
 
+    phonemes: list[str]
+    """Phonemes that produced this audio chunk."""
+
+    phoneme_ids: list[int]
+    """Phoneme ids that produced this audio chunk."""
+
+    phoneme_id_samples: Optional[np.ndarray] = None
+    """Number of audio samples for each phoneme id (alignments).
+
+    Only available for supported voice models.
+    """
+
+    phoneme_alignments: Optional[list[PhonemeAlignment]] = None
+    """Alignments between phonemes and audio samples."""
+
+    # ---
+
     _audio_int16_array: Optional[np.ndarray] = None
     _audio_int16_bytes: Optional[bytes] = None
+    _phoneme_alignments: Optional[list[PhonemeAlignment]] = None
 
     @property
     def audio_int16_array(self) -> np.ndarray:
@@ -206,12 +232,14 @@ class PiperVoice:
         self,
         text: str,
         syn_config: Optional[SynthesisConfig] = None,
+        include_alignments: bool = False,
     ) -> Iterable[AudioChunk]:
         """
         Synthesize one audio chunk per sentence from from text.
 
         :param text: Text to synthesize.
         :param syn_config: Synthesis configuration.
+        :param include_alignments: If True and the model supports it, include phoneme/audio alignments.
         """
         if syn_config is None:
             syn_config = _DEFAULT_SYNTHESIS_CONFIG
@@ -224,7 +252,17 @@ class PiperVoice:
                 continue
 
             phoneme_ids = self.phonemes_to_ids(phonemes)
-            audio = self.phoneme_ids_to_audio(phoneme_ids, syn_config)
+
+            phoneme_id_samples: Optional[np.ndarray] = None
+            audio_result = self.phoneme_ids_to_audio(
+                phoneme_ids, syn_config, include_alignments=include_alignments
+            )
+            if isinstance(audio_result, tuple):
+                # Audio + alignments
+                audio, phoneme_id_samples = audio_result
+            else:
+                # Audio only
+                audio = audio_result
 
             if syn_config.normalize_audio:
                 max_val = np.max(np.abs(audio))
@@ -239,11 +277,62 @@ class PiperVoice:
 
             audio = np.clip(audio, -1.0, 1.0).astype(np.float32)
 
+            phoneme_alignments: Optional[list[PhonemeAlignment]] = None
+            if (phoneme_id_samples is not None) and (
+                len(phoneme_id_samples) == len(phoneme_ids)
+            ):
+                pad_ids = self.config.phoneme_id_map.get(PAD, [])
+                phoneme_id_idx = 0
+                phoneme_alignments = []
+                alignment_failed = False
+                for phoneme in itertools.chain([BOS], phonemes, [EOS]):
+                    expected_ids = self.config.phoneme_id_map.get(phoneme, [])
+
+                    ids_to_check: Iterable[int]
+                    if phoneme != EOS:
+                        ids_to_check = itertools.chain(expected_ids, pad_ids)
+                    else:
+                        ids_to_check = expected_ids
+
+                    start_phoneme_id_idx = phoneme_id_idx
+                    for phoneme_id in ids_to_check:
+                        if phoneme_id_idx >= len(phoneme_ids):
+                            # Ran out of phoneme ids
+                            alignment_failed = True
+                            break
+
+                        if phoneme_id != phoneme_ids[phoneme_id_idx]:
+                            # Bad alignment
+                            alignment_failed = True
+                            break
+
+                        phoneme_id_idx += 1
+
+                    if alignment_failed:
+                        break
+
+                    phoneme_alignments.append(
+                        PhonemeAlignment(
+                            phoneme=phoneme,
+                            num_samples=sum(
+                                phoneme_id_samples[start_phoneme_id_idx:phoneme_id_idx]
+                            ),
+                        )
+                    )
+
+                if alignment_failed:
+                    phoneme_alignments = None
+                    _LOGGER.debug("Phoneme alignment failed")
+
             yield AudioChunk(
                 sample_rate=self.config.sample_rate,
                 sample_width=2,
                 sample_channels=1,
                 audio_float_array=audio,
+                phonemes=phonemes,
+                phoneme_ids=phoneme_ids,
+                phoneme_id_samples=phoneme_id_samples,
+                phoneme_alignments=phoneme_alignments,
             )
 
     def synthesize_wav(
@@ -275,14 +364,22 @@ class PiperVoice:
             wav_file.writeframes(audio_chunk.audio_int16_bytes)
 
     def phoneme_ids_to_audio(
-        self, phoneme_ids: list[int], syn_config: Optional[SynthesisConfig] = None
-    ) -> np.ndarray:
+        self,
+        phoneme_ids: list[int],
+        syn_config: Optional[SynthesisConfig] = None,
+        include_alignments: bool = False,
+    ) -> Union[np.ndarray, Tuple[np.ndarray, Optional[np.ndarray]]]:
         """
         Synthesize raw audio from phoneme ids.
 
         :param phoneme_ids: List of phoneme ids.
         :param syn_config: Synthesis configuration.
+        :param include_alignments: Return samples per phoneme id if True.
         :return: Audio float numpy array from voice model (unnormalized, in range [-1, 1]).
+
+        If include_alignments is True and the voice model supports it, the return
+        value will be a tuple instead with (audio, phoneme_id_samples) where
+        phoneme_id_samples contains the number of audio samples per phoneme id.
         """
         if syn_config is None:
             syn_config = _DEFAULT_SYNTHESIS_CONFIG
@@ -326,9 +423,21 @@ class PiperVoice:
             args["sid"] = sid
 
         # Synthesize through onnx
-        audio = self.session.run(
+        result = self.session.run(
             None,
             args,
-        )[0].squeeze()
+        )
+        audio = result[0].squeeze()
+        if not include_alignments:
+            return audio
 
-        return audio
+        if len(result) == 1:
+            # Alignment is not available from voice model
+            return audio, None
+
+        # Number of samples for each phoneme id
+        phoneme_id_samples = (result[1].squeeze() * self.config.hop_length).astype(
+            np.int64
+        )
+
+        return audio, phoneme_id_samples

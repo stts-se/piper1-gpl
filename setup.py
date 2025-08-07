@@ -72,6 +72,9 @@ setup(
         "http": [
             "flask>=3,<4",
         ],
+        "alignment": [
+            "onnx>=1,<2",
+        ],
     },
     packages=["piper", "piper.tashkeel", "piper.train"],
     package_dir={"": "src"},

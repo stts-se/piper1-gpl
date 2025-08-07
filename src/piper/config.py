@@ -2,11 +2,13 @@
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any, Final, Mapping, Optional, Sequence
 
-DEFAULT_NOISE_SCALE = 0.667
-DEFAULT_LENGTH_SCALE = 1.0
-DEFAULT_NOISE_W_SCALE = 0.8
+DEFAULT_NOISE_SCALE: Final = 0.667
+DEFAULT_LENGTH_SCALE: Final = 1.0
+DEFAULT_NOISE_W_SCALE: Final = 0.8
+
+DEFAULT_HOP_LENGTH: Final = 256
 
 
 class PhonemeType(str, Enum):
@@ -46,6 +48,8 @@ class PiperConfig:
     noise_scale: float = DEFAULT_NOISE_SCALE
     noise_w_scale: float = DEFAULT_NOISE_W_SCALE
 
+    hop_length: int = DEFAULT_HOP_LENGTH
+
     @staticmethod
     def from_dict(config: dict[str, Any]) -> "PiperConfig":
         """Load configuration from a dictionary."""
@@ -65,6 +69,8 @@ class PiperConfig:
             speaker_id_map=config.get("speaker_id_map", {}),
             #
             piper_version=config.get("piper_version"),
+            #
+            hop_length=config.get("hop_length", DEFAULT_HOP_LENGTH),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -86,6 +92,7 @@ class PiperConfig:
             },
             "phoneme_id_map": self.phoneme_id_map,
             "speaker_id_map": self.speaker_id_map,
+            "hop_length": self.hop_length,
         }
 
         if self.piper_version:

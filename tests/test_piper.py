@@ -3,8 +3,10 @@
 import io
 import wave
 from pathlib import Path
+from unittest.mock import patch
 
 from piper import PiperVoice
+from piper.const import BOS, EOS
 from piper.phonemize_espeak import EspeakPhonemizer
 
 _DIR = Path(__file__).parent
@@ -184,3 +186,187 @@ def test_raw_phonemes() -> None:
     assert len(phonemes) == 1
     phonemes_str = "".join("".join(ps) for ps in phonemes)
     assert phonemes_str == "bˈætmæn ɪz bɹˈuːs wˈe‍ɪn"
+
+
+def test_synthesize_alignment() -> None:
+    """Test synthesis with phoneme alignments."""
+    alignments = [
+        [  # Test 1.
+            256,
+            256,
+            512,
+            256,
+            768,
+            512,
+            512,
+            256,
+            256,
+            512,
+            768,
+            768,
+            256,
+            1280,
+            1024,
+            512,
+            1280,
+            1024,
+            512,
+            768,
+            1536,
+            512,
+            768,
+            768,
+            768,
+        ],
+        [  # Test 2.
+            512,
+            256,
+            768,
+            256,
+            768,
+            256,
+            1024,
+            256,
+            768,
+            256,
+            512,
+            256,
+            1024,
+            512,
+            512,
+            256,
+            1792,
+            768,
+            512,
+            1024,
+            512,
+            1024,
+            1280,
+            2048,
+            1280,
+        ],
+    ]
+
+    voice = PiperVoice.load(_TEST_VOICE)
+    original_phoneme_ids_to_audio = voice.phoneme_ids_to_audio
+    alignments_idx = 0
+
+    def phoneme_ids_to_audio(self, phoneme_ids, **kwargs):
+        nonlocal alignments_idx
+        kwargs["include_alignments"] = False
+        audio = original_phoneme_ids_to_audio(self, phoneme_ids, **kwargs)
+        audio_alignments = alignments[alignments_idx]
+        alignments_idx += 1
+
+        return audio, audio_alignments
+
+    with patch.object(voice, "phoneme_ids_to_audio", phoneme_ids_to_audio):
+        audio_chunks = list(voice.synthesize("Test 1. Test 2."))
+
+    assert len(audio_chunks) == 2  # 1 chunk per sentence
+
+    assert audio_chunks[0].phonemes == [
+        "t",
+        "ˈ",
+        "ɛ",
+        "s",
+        "t",
+        " ",
+        "w",
+        "ˈ",
+        "ʌ",
+        "n",
+        ".",
+    ]
+    assert audio_chunks[0].phoneme_ids == [
+        1,
+        0,
+        32,
+        0,
+        120,
+        0,
+        61,
+        0,
+        31,
+        0,
+        32,
+        0,
+        3,
+        0,
+        35,
+        0,
+        120,
+        0,
+        102,
+        0,
+        26,
+        0,
+        10,
+        0,
+        2,
+    ]
+    assert audio_chunks[1].phonemes == [
+        "t",
+        "ˈ",
+        "ɛ",
+        "s",
+        "t",
+        " ",
+        "t",
+        "ˈ",
+        "u",
+        "ː",
+        ".",
+    ]
+    assert audio_chunks[1].phoneme_ids == [
+        1,
+        0,
+        32,
+        0,
+        120,
+        0,
+        61,
+        0,
+        31,
+        0,
+        32,
+        0,
+        3,
+        0,
+        32,
+        0,
+        120,
+        0,
+        33,
+        0,
+        122,
+        0,
+        10,
+        0,
+        2,
+    ]
+
+    # Check alignments (assumes each phoneme is 1 id + pad)
+    assert len(audio_chunks) == len(alignments)
+    for chunk_idx, chunk in enumerate(audio_chunks):
+        assert chunk.phoneme_id_samples is not None
+        assert chunk.phoneme_alignments is not None
+
+        expected_alignments = alignments[chunk_idx]
+        assert len(expected_alignments) == len(chunk.phoneme_id_samples)
+
+        phonemes = [BOS] + chunk.phonemes + [EOS]
+        assert len(phonemes) == len(chunk.phoneme_alignments)
+        alignment_idx = 0
+        for phoneme_idx, phoneme in enumerate(phonemes):
+            actual_alignment = chunk.phoneme_alignments[phoneme_idx]
+            assert actual_alignment.phoneme == phoneme
+
+            expected_samples = expected_alignments[alignment_idx]
+            alignment_idx += 1
+            if phoneme != EOS:
+                # PAD
+                expected_samples += expected_alignments[alignment_idx]
+                alignment_idx += 1
+
+            assert actual_alignment.num_samples == expected_samples
