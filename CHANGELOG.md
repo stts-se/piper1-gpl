@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add experimental support for alignments (see docs/ALIGNMENTS.md)
+
 ## 1.3.0
 
 - Moved development to OHF-Voice org

@@ -363,10 +363,13 @@ def test_synthesize_alignment() -> None:
             assert actual_alignment.phoneme == phoneme
 
             expected_samples = expected_alignments[alignment_idx]
+            expected_ids = [chunk.phoneme_ids[alignment_idx]]
             alignment_idx += 1
             if phoneme != EOS:
                 # PAD
                 expected_samples += expected_alignments[alignment_idx]
+                expected_ids.append(0)  # pad
                 alignment_idx += 1
 
             assert actual_alignment.num_samples == expected_samples
+            assert actual_alignment.phoneme_ids == expected_ids

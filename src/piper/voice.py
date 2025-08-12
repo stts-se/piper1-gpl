@@ -9,7 +9,7 @@ import unicodedata
 import wave
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import onnxruntime
@@ -33,6 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 @dataclass
 class PhonemeAlignment:
     phoneme: str
+    phoneme_ids: Sequence[int]
     num_samples: int
 
 
@@ -291,9 +292,8 @@ class PiperVoice:
                 for phoneme in itertools.chain([BOS], phonemes, [EOS]):
                     expected_ids = self.config.phoneme_id_map.get(phoneme, [])
 
-                    ids_to_check: Iterable[int]
                     if phoneme != EOS:
-                        ids_to_check = itertools.chain(expected_ids, pad_ids)
+                        ids_to_check = list(itertools.chain(expected_ids, pad_ids))
                     else:
                         ids_to_check = expected_ids
 
@@ -317,6 +317,7 @@ class PiperVoice:
                     phoneme_alignments.append(
                         PhonemeAlignment(
                             phoneme=phoneme,
+                            phoneme_ids=ids_to_check,
                             num_samples=sum(
                                 phoneme_id_samples[start_phoneme_id_idx:phoneme_id_idx]
                             ),
@@ -344,7 +345,8 @@ class PiperVoice:
         wav_file: wave.Wave_write,
         syn_config: Optional[SynthesisConfig] = None,
         set_wav_format: bool = True,
-    ) -> None:
+        include_alignments: bool = False,
+    ) -> Optional[list[PhonemeAlignment]]:
         """
         Synthesize and write WAV audio from text.
 
@@ -352,9 +354,15 @@ class PiperVoice:
         :param wav_file: WAV file writer.
         :param syn_config: Synthesis configuration.
         :param set_wav_format: True if the WAV format should be set automatically.
+        :param include_alignments: If True and the model supports it, return phoneme/audio alignments.
+
+        :return: Phoneme/audio alignments if include_alignments is True, otherwise None.
         """
+        alignments: list[PhonemeAlignment] = []
         first_chunk = True
-        for audio_chunk in self.synthesize(text, syn_config=syn_config):
+        for audio_chunk in self.synthesize(
+            text, syn_config=syn_config, include_alignments=include_alignments
+        ):
             if first_chunk:
                 if set_wav_format:
                     # Set audio format on first chunk
@@ -365,6 +373,14 @@ class PiperVoice:
                 first_chunk = False
 
             wav_file.writeframes(audio_chunk.audio_int16_bytes)
+
+            if include_alignments and audio_chunk.phoneme_alignments:
+                alignments.extend(audio_chunk.phoneme_alignments)
+
+        if include_alignments:
+            return alignments
+
+        return None
 
     def phoneme_ids_to_audio(
         self,

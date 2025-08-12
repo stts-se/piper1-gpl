@@ -23,6 +23,11 @@ const PhonemeId ID_PAD = 0; // interleaved
 const PhonemeId ID_BOS = 1; // beginning of sentence
 const PhonemeId ID_EOS = 2; // end of sentence
 
+const Phoneme PHONEME_PAD = U'_';
+const Phoneme PHONEME_BOS = U'^';
+const Phoneme PHONEME_EOS = U'$';
+const Phoneme PHONEME_SEPARATOR = 0;
+
 const float DEFAULT_LENGTH_SCALE = 1.0f;
 const float DEFAULT_NOISE_SCALE = 0.667f;
 const float DEFAULT_NOISE_W_SCALE = 0.8f;
@@ -69,10 +74,11 @@ struct piper_synthesizer {
     Ort::Env session_env;
 
     // synthesize state
-    std::queue<std::vector<PhonemeId>> phoneme_id_queue;
+    std::queue<std::pair<std::vector<Phoneme>, std::vector<PhonemeId>>>
+        phoneme_id_queue;
     std::vector<float> chunk_samples;
-    std::string chunk_phonemes;
     std::vector<int> chunk_phoneme_ids;
+    std::vector<Phoneme> chunk_phonemes;
     std::vector<int> chunk_alignments;
     float length_scale = DEFAULT_LENGTH_SCALE;
     float noise_scale = DEFAULT_NOISE_SCALE;
