@@ -6,7 +6,7 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-COPY pyproject.toml setup.py espeak_ng.i CMakeLists.txt MANIFEST.in README.md ./
+COPY pyproject.toml setup.py CMakeLists.txt MANIFEST.in README.md ./
 COPY src/piper/ ./src/piper/
 COPY script/setup script/dev_build script/package ./script/
 RUN script/setup --dev
@@ -20,8 +20,8 @@ FROM python:3.12-slim
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
 WORKDIR /app
-COPY --from=builder /app/dist/piper-*linux*.whl ./dist/
-RUN pip3 install ./dist/piper-*linux*.whl
+COPY --from=builder /app/dist/piper_tts-*linux*.whl ./dist/
+RUN pip3 install ./dist/piper_tts-*linux*.whl
 RUN pip3 install 'flask>=3,<4'
 
 COPY docker/entrypoint.sh /
