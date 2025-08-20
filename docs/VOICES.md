@@ -23,6 +23,7 @@ Supported languages:
 * Français, France (French, fr_FR)
 * Magyar, Hungary (Hungarian, hu_HU)
 * íslenska, Iceland (Icelandic, is_IS)
+* Bahasa Indonesia, Indonesia (Indonesian, id_ID)
 * Italiano, Italy (Italian, it_IT)
 * ქართული ენა, Georgia (Georgian, ka_GE)
 * қазақша, Kazakhstan (Kazakh, kk_KZ)
