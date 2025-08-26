@@ -45,6 +45,7 @@ Supported languages:
 * srpski, Serbia (Serbian, sr_RS)
 * Svenska, Sweden (Swedish, sv_SE)
 * Kiswahili, Democratic Republic of the Congo (Swahili, sw_CD)
+* తెలుగు, India (Telugu, te_IN)
 * Türkçe, Turkey (Turkish, tr_TR)
 * украї́нська мо́ва, Ukraine (Ukrainian, uk_UA)
 * Tiếng Việt, Vietnam (Vietnamese, vi_VN)
