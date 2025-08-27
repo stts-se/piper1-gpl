@@ -178,6 +178,10 @@ def test_raw_phonemes() -> None:
     """Test [[ phonemes block ]]."""
     voice = PiperVoice.load(_TEST_VOICE)
     phonemes = voice.phonemize("I am the [[ bˈætmæn ]] not [[bɹˈuːs wˈe‍ɪn]]")
+
+    # Raw phonemes should not split sentences
+    assert len(phonemes) == 1
+
     phonemes_str = "".join("".join(ps) for ps in phonemes)
     assert phonemes_str == "aɪɐm ðə bˈætmæn nˈɑːt bɹˈuːs wˈe‍ɪn"
 

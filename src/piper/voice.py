@@ -179,8 +179,11 @@ class PiperVoice:
 
         phonemes: list[list[str]] = []
         text_parts = _PHONEME_BLOCK_PATTERN.split(text)
+        prev_raw_phonemes = False
         for i, text_part in enumerate(text_parts):
             if text_part.startswith("[["):
+                prev_raw_phonemes = True
+
                 # Phonemes
                 if not phonemes:
                     # Start new sentence
@@ -212,7 +215,15 @@ class PiperVoice:
                 text_part_phonemes = _ESPEAK_PHONEMIZER.phonemize(
                     self.config.espeak_voice, text_part
                 )
+
+                if prev_raw_phonemes and text_part_phonemes:
+                    # Add to previous block of phonemes first if it came from [[ raw phonemes]]
+                    phonemes[-1].extend(text_part_phonemes[0])
+                    text_part_phonemes = text_part_phonemes[1:]
+
                 phonemes.extend(text_part_phonemes)
+
+            prev_raw_phonemes = False
 
         if phonemes and (not phonemes[-1]):
             # Remove empty phonemes

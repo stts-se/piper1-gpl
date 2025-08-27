@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.3.1 (unreleased)
 
 - Add experimental support for alignments (see docs/ALIGNMENTS.md)
+- Raw phonemes no longer split sentences
 
 ## 1.3.0
 
