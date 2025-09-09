@@ -89,6 +89,12 @@ To make this compatible with other Piper voices, rename `model.onnx` as `<langua
 * `en_US-lessac-medium.onnx`
 * `en_US-lessac-medium.onnx.json`
 
+## Hardware
+
+Most of the Piper voices were trained/fine-tuned on a Threadripper 1900X with 128GB of RAM and either an NVIDIA A6000 (48 GB VRAM) or a 3090 (24 GB VRAM).
+
+Users have reported success with as little as 8GB of VRAM and alternative GPUs like the RX 7600.
+
 <!-- Links -->
 [espeak-ng]: https://github.com/espeak-ng/espeak-ng
 [lighting]: https://lightning.ai/docs/pytorch/stable/
