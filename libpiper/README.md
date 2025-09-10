@@ -38,7 +38,7 @@ int main() {
     piper_synthesize_options options = piper_default_synthesize_options(synth);
     // Change options here:
     // options.length_scale = 2;
-    // joptions.speaker_id = 5;
+    // options.speaker_id = 5;
 
     piper_synthesize_start(synth, "Welcome to the world of speech synthesis!",
                            &options /* NULL for defaults */);
