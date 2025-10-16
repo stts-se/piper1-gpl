@@ -104,33 +104,49 @@ class VitsDataModule(L.LightningDataModule):
     def prepare_data(self):
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-        # Write config
-        self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.config_path, "w", encoding="utf-8") as config_file:
-            json.dump(
-                PiperConfig(
-                    num_symbols=self.num_symbols,
-                    num_speakers=self.num_speakers,
-                    sample_rate=self.sample_rate,
-                    espeak_voice=self.espeak_voice,
-                    phoneme_id_map=DEFAULT_PHONEME_ID_MAP,
-                    phoneme_type=PhonemeType.ESPEAK,
-                    piper_version="1.3.0",
-                ).to_dict(),
-                config_file,
-                ensure_ascii=False,
-                indent=2,
-            )
+        phoneme_id_map = DEFAULT_PHONEME_ID_MAP
+        
+        ## Write config if it doesn't exist
+        import os
+        if os.path.isfile(self.config_path):
+            _LOGGER.info(f"Using existing config file {self.config_path}")
+            phoneme_id_map: dict[str, list[int]] = {}
+            import json
+            with open(self.config_path) as f:
+                data = json.load(f)
+                phoneme_id_map = data["phoneme_id_map"]
+        else:
+            _LOGGER.info(f"Creating new config file {self.config_path}")
+            self.config_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.config_path, "w", encoding="utf-8") as config_file:
+                json.dump(
+                    PiperConfig(
+                        num_symbols=self.num_symbols,
+                        num_speakers=self.num_speakers,
+                        sample_rate=self.sample_rate,
+                        espeak_voice=self.espeak_voice,
+                        phoneme_id_map=DEFAULT_PHONEME_ID_MAP,
+                        phoneme_type=PhonemeType.ESPEAK,
+                        piper_version="1.3.0",
+                    ).to_dict(),
+                    config_file,
+                    ensure_ascii=False,
+                    indent=2,
+                )
+
+        vad = SileroVoiceActivityDetector()
 
         phonemizer = EspeakPhonemizer()
-        vad = SileroVoiceActivityDetector()
 
         num_utterances = 0
         report_prepare: Optional[bool] = None
         with open(self.csv_path, "r", encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file, delimiter="|")
             for row_number, row in enumerate(reader, start=1):
-                utt_id, text = row[0], row[-1]
+                utt_id, text = row[0], row[1]
+                input_phonemes = None
+                if len(row)>=3:
+                    input_phonemes = row[2]
                 audio_path = self.audio_dir / utt_id
                 if not audio_path.exists():
                     audio_path = self.audio_dir / f"{utt_id}.wav"
@@ -145,11 +161,14 @@ class VitsDataModule(L.LightningDataModule):
                 if not text_path.exists():
                     text_path.write_text(text, encoding="utf-8")
 
-                # phonemes
+                ## phonemes
                 phonemes: Optional[List[List[str]]] = None
                 phonemes_path = self.cache_dir / f"{cache_id}.phonemes.txt"
                 if not phonemes_path.exists():
-                    phonemes = phonemizer.phonemize(self.espeak_voice, text)
+                    if not input_phonemes is None:
+                        phonemes: Optional[List[List[str]]] = [input_phonemes]
+                    else:
+                        phonemes = phonemizer.phonemize(self.espeak_voice, text)
                     with open(phonemes_path, "w", encoding="utf-8") as phonemes_file:
                         for sentence_phonemes in phonemes:
                             print("".join(sentence_phonemes), file=phonemes_file)
@@ -157,16 +176,19 @@ class VitsDataModule(L.LightningDataModule):
                     if report_prepare is None:
                         report_prepare = True
 
-                # phoneme ids
+                ## phoneme ids
                 phoneme_ids_path = self.cache_dir / f"{cache_id}.phonemes.pt"
                 if not phoneme_ids_path.exists():
                     if phonemes is None:
-                        phonemes = phonemizer.phonemize(self.espeak_voice, text)
+                        if not input_phonemes is None:
+                            phonemes: Optional[List[List[str]]] = [input_phonemes]
+                        else:
+                            phonemes = phonemizer.phonemize(self.espeak_voice, text)
 
                     phoneme_ids = list(
                         itertools.chain(
                             *(
-                                phonemes_to_ids(sentence_phonemes)
+                                phonemes_to_ids(sentence_phonemes, phoneme_id_map)
                                 for sentence_phonemes in phonemes
                             )
                         )
@@ -175,7 +197,7 @@ class VitsDataModule(L.LightningDataModule):
                     if report_prepare is None:
                         report_prepare = True
 
-                # normalized audio
+                ## normalized audio
                 norm_audio_path = self.cache_dir / f"{cache_id}.audio.pt"
                 audio_norm_tensor: Optional[torch.Tensor] = None
                 if not norm_audio_path.exists():
@@ -203,7 +225,7 @@ class VitsDataModule(L.LightningDataModule):
                     if report_prepare is None:
                         report_prepare = True
 
-                # mel spectrogram
+                ## mel spectrogram
                 audio_spec_path = self.cache_dir / f"{cache_id}.spec.pt"
                 if not audio_spec_path.exists():
                     if audio_norm_tensor is None:
