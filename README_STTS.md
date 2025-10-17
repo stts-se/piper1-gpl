@@ -1,11 +1,24 @@
-# Information about STTS' fork of https://github.com/OHF-Voice/piper1-gpl
+# Information about STTS' Piper fork
 
-The updates we have made are intended to be backward compatible.
+Used Piper version: 1.3.0
 
-Description of updates
+The updates we have made are intended to be backward compatible. A description of the updates can be found below.
 
-1. `src/piper/train/export_onnx.py`
+## A. Training models with existing transcriptions
 
-explicit dynamo parameter set for torch.onnx.export
+Affected file: `src/piper/train/vits/dataset.py`
+
+1. If the specified config file already exists, it will not be overwritten
+
+2. If the input csv file contains three columns instead of two, the third column will be used for the `phonemes` variable, instead of generated espeak phonemes.
 
 
+## B. Default dynamo parameter for torch.onnx.export
+
+Affected file: `src/piper/train/export_onnx.py`
+
+We believe the default value has changed between torch version, causing an error if this value is unset.
+
+---
+
+A detailed comparison can be found here: https://github.com/OHF-Voice/piper1-gpl/compare/main...stts-se:piper1-gpl:main
