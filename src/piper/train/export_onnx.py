@@ -97,6 +97,7 @@ def main() -> None:
         opset_version=OPSET_VERSION,
         input_names=["input", "input_lengths", "scales", "sid"],
         output_names=["output"],
+        dynamo=False, # default value seems to have changed between torch versions
         dynamic_axes={
             "input": {0: "batch_size", 1: "phonemes"},
             "input_lengths": {0: "batch_size"},
