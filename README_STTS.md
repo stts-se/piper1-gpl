@@ -17,7 +17,7 @@ Affected file: `src/piper/train/vits/dataset.py`
 
 Affected file: `src/piper/train/export_onnx.py`
 
-We believe the default value has changed between torch version, causing an error if this value is unset.
+We believe default value for `dynamo` in torch.onnx.export has changed between torch versions, causing an error if this value is unset
 
 ---
 
