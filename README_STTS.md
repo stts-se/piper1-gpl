@@ -1,6 +1,6 @@
 # Information about STTS' Piper fork
 
-Used Piper version: 1.3.0
+Used Piper version: 1.3.1 (unreleased)
 
 The updates we have made are intended to be backward compatible. A description of the updates can be found below.
 
