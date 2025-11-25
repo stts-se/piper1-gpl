@@ -153,6 +153,8 @@ class VitsDataModule(L.LightningDataModule):
                 if "espeak" in data:
                     self.piper_config.espeak_voice = data["espeak"]["voice"]
                 _LOGGER.info(f"Loaded config {self.piper_config}")
+                if self.piper_config.num_speakers != self.num_speakers:
+                    raise Exception(f"Config file {self.config_path} has num_speakers = {self.piper_config.num_speakers}, but it was set to {self.num_speakers} with cmdline args")
 
         else:
             _LOGGER.info(f"Creating new config file {self.config_path}")
@@ -182,7 +184,7 @@ class VitsDataModule(L.LightningDataModule):
         text_index = 1
         if self.is_multispeaker:
             text_index = 2
-        
+
         num_utterances = 0
         report_prepare: Optional[bool] = None
         with open(self.csv_path, "r", encoding="utf-8") as csv_file:
