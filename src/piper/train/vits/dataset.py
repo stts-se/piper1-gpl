@@ -106,15 +106,7 @@ class VitsDataModule(L.LightningDataModule):
 
     def prepare_data(self):
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.piper_config = PiperConfig(
-            num_symbols=self.num_symbols,
-            num_speakers=self.num_speakers,
-            sample_rate=self.sample_rate,
-            espeak_voice=self.espeak_voice,
-            phoneme_id_map=DEFAULT_PHONEME_ID_MAP,
-            phoneme_type=PhonemeType.ESPEAK,
-            piper_version="1.3.0",
-        )
+        self.piper_config = None
 
         speaker_id_map: Dict[str, int] = {}
         if self.is_multispeaker:
@@ -142,8 +134,6 @@ class VitsDataModule(L.LightningDataModule):
                     len(speaker_id_map),
                 )
 
-            self.piper_config.speaker_id_map = speaker_id_map
-
         ## Write config if it doesn't exist
         import os, json
         if os.path.isfile(self.config_path):
@@ -151,9 +141,31 @@ class VitsDataModule(L.LightningDataModule):
             #phoneme_id_map: dict[str, list[int]] = {}
             with open(self.config_path) as f:
                 data = json.load(f)
-                self.piper_config.phoneme_id_map = data["phoneme_id_map"]
+                self.piper_config = PiperConfig(
+                    phoneme_id_map = data["phoneme_id_map"],
+                    num_symbols = data["num_symbols"],
+                    sample_rate = data["audio"]["sample_rate"],
+                    espeak_voice = None,
+                    num_speakers = data["num_speakers"],
+                    phoneme_type = data["phoneme_type"],
+                    piper_version = data["piper_version"],
+                    speaker_id_map = speaker_id_map)
+                if "espeak" in data:
+                    self.piper_config.espeak_voice = data["espeak"]["voice"]
+                _LOGGER.info(f"Loaded config {self.piper_config}")
+
         else:
             _LOGGER.info(f"Creating new config file {self.config_path}")
+            self.piper_config = PiperConfig(
+                num_symbols=self.num_symbols,
+                num_speakers=self.num_speakers,
+                sample_rate=self.sample_rate,
+                espeak_voice=self.espeak_voice,
+                phoneme_id_map=DEFAULT_PHONEME_ID_MAP,
+                phoneme_type=PhonemeType.ESPEAK,
+                piper_version="1.3.0",
+            )
+            self.piper_config.speaker_id_map = speaker_id_map
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.config_path, "w", encoding="utf-8") as config_file:
                 json.dump(
