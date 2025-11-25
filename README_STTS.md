@@ -10,7 +10,7 @@ Affected file: `src/piper/train/vits/dataset.py`
 
 1. If the specified config file already exists, it will not be overwritten
 
-2. If the input csv file contains three columns instead of two, the third column will be used for the `phonemes` variable, instead of generated espeak phonemes.
+2. If the input csv file contains an extra column after the text (column 3 or 4 depending on multispeaker settings), the extra column will be used for the `phonemes` variable, instead of generated espeak phonemes.
 
 
 ## B. Default dynamo parameter for torch.onnx.export
